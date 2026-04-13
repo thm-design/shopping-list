@@ -1,0 +1,548 @@
+/* tslint:disable */
+//  This file was automatically generated and should not be edited.
+
+export type Category = {
+  __typename: "Category",
+  color?: string | null,
+  createdAt: string,
+  id: string,
+  name?: string | null,
+  updatedAt: string,
+};
+
+export type ListItem = {
+  __typename: "ListItem",
+  categoryId?: string | null,
+  createdAt: string,
+  id: string,
+  isCompleted?: boolean | null,
+  name?: string | null,
+  quantity?: number | null,
+  sortOrder?: number | null,
+  updatedAt: string,
+};
+
+export type ModelCategoryFilterInput = {
+  and?: Array< ModelCategoryFilterInput | null > | null,
+  color?: ModelStringInput | null,
+  createdAt?: ModelStringInput | null,
+  id?: ModelIDInput | null,
+  name?: ModelStringInput | null,
+  not?: ModelCategoryFilterInput | null,
+  or?: Array< ModelCategoryFilterInput | null > | null,
+  updatedAt?: ModelStringInput | null,
+};
+
+export type ModelStringInput = {
+  attributeExists?: boolean | null,
+  attributeType?: ModelAttributeTypes | null,
+  beginsWith?: string | null,
+  between?: Array< string | null > | null,
+  contains?: string | null,
+  eq?: string | null,
+  ge?: string | null,
+  gt?: string | null,
+  le?: string | null,
+  lt?: string | null,
+  ne?: string | null,
+  notContains?: string | null,
+  size?: ModelSizeInput | null,
+};
+
+export enum ModelAttributeTypes {
+  _null = "_null",
+  binary = "binary",
+  binarySet = "binarySet",
+  bool = "bool",
+  list = "list",
+  map = "map",
+  number = "number",
+  numberSet = "numberSet",
+  string = "string",
+  stringSet = "stringSet",
+}
+
+
+export type ModelSizeInput = {
+  between?: Array< number | null > | null,
+  eq?: number | null,
+  ge?: number | null,
+  gt?: number | null,
+  le?: number | null,
+  lt?: number | null,
+  ne?: number | null,
+};
+
+export type ModelIDInput = {
+  attributeExists?: boolean | null,
+  attributeType?: ModelAttributeTypes | null,
+  beginsWith?: string | null,
+  between?: Array< string | null > | null,
+  contains?: string | null,
+  eq?: string | null,
+  ge?: string | null,
+  gt?: string | null,
+  le?: string | null,
+  lt?: string | null,
+  ne?: string | null,
+  notContains?: string | null,
+  size?: ModelSizeInput | null,
+};
+
+export type ModelCategoryConnection = {
+  __typename: "ModelCategoryConnection",
+  items:  Array<Category | null >,
+  nextToken?: string | null,
+};
+
+export type ModelListItemFilterInput = {
+  and?: Array< ModelListItemFilterInput | null > | null,
+  categoryId?: ModelStringInput | null,
+  createdAt?: ModelStringInput | null,
+  id?: ModelIDInput | null,
+  isCompleted?: ModelBooleanInput | null,
+  name?: ModelStringInput | null,
+  not?: ModelListItemFilterInput | null,
+  or?: Array< ModelListItemFilterInput | null > | null,
+  quantity?: ModelIntInput | null,
+  sortOrder?: ModelIntInput | null,
+  updatedAt?: ModelStringInput | null,
+};
+
+export type ModelBooleanInput = {
+  attributeExists?: boolean | null,
+  attributeType?: ModelAttributeTypes | null,
+  eq?: boolean | null,
+  ne?: boolean | null,
+};
+
+export type ModelIntInput = {
+  attributeExists?: boolean | null,
+  attributeType?: ModelAttributeTypes | null,
+  between?: Array< number | null > | null,
+  eq?: number | null,
+  ge?: number | null,
+  gt?: number | null,
+  le?: number | null,
+  lt?: number | null,
+  ne?: number | null,
+};
+
+export type ModelListItemConnection = {
+  __typename: "ModelListItemConnection",
+  items:  Array<ListItem | null >,
+  nextToken?: string | null,
+};
+
+export type ModelCategoryConditionInput = {
+  and?: Array< ModelCategoryConditionInput | null > | null,
+  color?: ModelStringInput | null,
+  createdAt?: ModelStringInput | null,
+  name?: ModelStringInput | null,
+  not?: ModelCategoryConditionInput | null,
+  or?: Array< ModelCategoryConditionInput | null > | null,
+  updatedAt?: ModelStringInput | null,
+};
+
+export type CreateCategoryInput = {
+  color?: string | null,
+  id?: string | null,
+  name?: string | null,
+};
+
+export type ModelListItemConditionInput = {
+  and?: Array< ModelListItemConditionInput | null > | null,
+  categoryId?: ModelStringInput | null,
+  createdAt?: ModelStringInput | null,
+  isCompleted?: ModelBooleanInput | null,
+  name?: ModelStringInput | null,
+  not?: ModelListItemConditionInput | null,
+  or?: Array< ModelListItemConditionInput | null > | null,
+  quantity?: ModelIntInput | null,
+  sortOrder?: ModelIntInput | null,
+  updatedAt?: ModelStringInput | null,
+};
+
+export type CreateListItemInput = {
+  categoryId?: string | null,
+  id?: string | null,
+  isCompleted?: boolean | null,
+  name?: string | null,
+  quantity?: number | null,
+  sortOrder?: number | null,
+};
+
+export type DeleteCategoryInput = {
+  id: string,
+};
+
+export type DeleteListItemInput = {
+  id: string,
+};
+
+export type UpdateCategoryInput = {
+  color?: string | null,
+  id: string,
+  name?: string | null,
+};
+
+export type UpdateListItemInput = {
+  categoryId?: string | null,
+  id: string,
+  isCompleted?: boolean | null,
+  name?: string | null,
+  quantity?: number | null,
+  sortOrder?: number | null,
+};
+
+export type ModelSubscriptionCategoryFilterInput = {
+  and?: Array< ModelSubscriptionCategoryFilterInput | null > | null,
+  color?: ModelSubscriptionStringInput | null,
+  createdAt?: ModelSubscriptionStringInput | null,
+  id?: ModelSubscriptionIDInput | null,
+  name?: ModelSubscriptionStringInput | null,
+  or?: Array< ModelSubscriptionCategoryFilterInput | null > | null,
+  updatedAt?: ModelSubscriptionStringInput | null,
+};
+
+export type ModelSubscriptionStringInput = {
+  beginsWith?: string | null,
+  between?: Array< string | null > | null,
+  contains?: string | null,
+  eq?: string | null,
+  ge?: string | null,
+  gt?: string | null,
+  in?: Array< string | null > | null,
+  le?: string | null,
+  lt?: string | null,
+  ne?: string | null,
+  notContains?: string | null,
+  notIn?: Array< string | null > | null,
+};
+
+export type ModelSubscriptionIDInput = {
+  beginsWith?: string | null,
+  between?: Array< string | null > | null,
+  contains?: string | null,
+  eq?: string | null,
+  ge?: string | null,
+  gt?: string | null,
+  in?: Array< string | null > | null,
+  le?: string | null,
+  lt?: string | null,
+  ne?: string | null,
+  notContains?: string | null,
+  notIn?: Array< string | null > | null,
+};
+
+export type ModelSubscriptionListItemFilterInput = {
+  and?: Array< ModelSubscriptionListItemFilterInput | null > | null,
+  categoryId?: ModelSubscriptionStringInput | null,
+  createdAt?: ModelSubscriptionStringInput | null,
+  id?: ModelSubscriptionIDInput | null,
+  isCompleted?: ModelSubscriptionBooleanInput | null,
+  name?: ModelSubscriptionStringInput | null,
+  or?: Array< ModelSubscriptionListItemFilterInput | null > | null,
+  quantity?: ModelSubscriptionIntInput | null,
+  sortOrder?: ModelSubscriptionIntInput | null,
+  updatedAt?: ModelSubscriptionStringInput | null,
+};
+
+export type ModelSubscriptionBooleanInput = {
+  eq?: boolean | null,
+  ne?: boolean | null,
+};
+
+export type ModelSubscriptionIntInput = {
+  between?: Array< number | null > | null,
+  eq?: number | null,
+  ge?: number | null,
+  gt?: number | null,
+  in?: Array< number | null > | null,
+  le?: number | null,
+  lt?: number | null,
+  ne?: number | null,
+  notIn?: Array< number | null > | null,
+};
+
+export type GetCategoryQueryVariables = {
+  id: string,
+};
+
+export type GetCategoryQuery = {
+  getCategory?:  {
+    __typename: "Category",
+    color?: string | null,
+    createdAt: string,
+    id: string,
+    name?: string | null,
+    updatedAt: string,
+  } | null,
+};
+
+export type GetListItemQueryVariables = {
+  id: string,
+};
+
+export type GetListItemQuery = {
+  getListItem?:  {
+    __typename: "ListItem",
+    categoryId?: string | null,
+    createdAt: string,
+    id: string,
+    isCompleted?: boolean | null,
+    name?: string | null,
+    quantity?: number | null,
+    sortOrder?: number | null,
+    updatedAt: string,
+  } | null,
+};
+
+export type ListCategoriesQueryVariables = {
+  filter?: ModelCategoryFilterInput | null,
+  limit?: number | null,
+  nextToken?: string | null,
+};
+
+export type ListCategoriesQuery = {
+  listCategories?:  {
+    __typename: "ModelCategoryConnection",
+    items:  Array< {
+      __typename: "Category",
+      color?: string | null,
+      createdAt: string,
+      id: string,
+      name?: string | null,
+      updatedAt: string,
+    } | null >,
+    nextToken?: string | null,
+  } | null,
+};
+
+export type ListListItemsQueryVariables = {
+  filter?: ModelListItemFilterInput | null,
+  limit?: number | null,
+  nextToken?: string | null,
+};
+
+export type ListListItemsQuery = {
+  listListItems?:  {
+    __typename: "ModelListItemConnection",
+    items:  Array< {
+      __typename: "ListItem",
+      categoryId?: string | null,
+      createdAt: string,
+      id: string,
+      isCompleted?: boolean | null,
+      name?: string | null,
+      quantity?: number | null,
+      sortOrder?: number | null,
+      updatedAt: string,
+    } | null >,
+    nextToken?: string | null,
+  } | null,
+};
+
+export type CreateCategoryMutationVariables = {
+  condition?: ModelCategoryConditionInput | null,
+  input: CreateCategoryInput,
+};
+
+export type CreateCategoryMutation = {
+  createCategory?:  {
+    __typename: "Category",
+    color?: string | null,
+    createdAt: string,
+    id: string,
+    name?: string | null,
+    updatedAt: string,
+  } | null,
+};
+
+export type CreateListItemMutationVariables = {
+  condition?: ModelListItemConditionInput | null,
+  input: CreateListItemInput,
+};
+
+export type CreateListItemMutation = {
+  createListItem?:  {
+    __typename: "ListItem",
+    categoryId?: string | null,
+    createdAt: string,
+    id: string,
+    isCompleted?: boolean | null,
+    name?: string | null,
+    quantity?: number | null,
+    sortOrder?: number | null,
+    updatedAt: string,
+  } | null,
+};
+
+export type DeleteCategoryMutationVariables = {
+  condition?: ModelCategoryConditionInput | null,
+  input: DeleteCategoryInput,
+};
+
+export type DeleteCategoryMutation = {
+  deleteCategory?:  {
+    __typename: "Category",
+    color?: string | null,
+    createdAt: string,
+    id: string,
+    name?: string | null,
+    updatedAt: string,
+  } | null,
+};
+
+export type DeleteListItemMutationVariables = {
+  condition?: ModelListItemConditionInput | null,
+  input: DeleteListItemInput,
+};
+
+export type DeleteListItemMutation = {
+  deleteListItem?:  {
+    __typename: "ListItem",
+    categoryId?: string | null,
+    createdAt: string,
+    id: string,
+    isCompleted?: boolean | null,
+    name?: string | null,
+    quantity?: number | null,
+    sortOrder?: number | null,
+    updatedAt: string,
+  } | null,
+};
+
+export type UpdateCategoryMutationVariables = {
+  condition?: ModelCategoryConditionInput | null,
+  input: UpdateCategoryInput,
+};
+
+export type UpdateCategoryMutation = {
+  updateCategory?:  {
+    __typename: "Category",
+    color?: string | null,
+    createdAt: string,
+    id: string,
+    name?: string | null,
+    updatedAt: string,
+  } | null,
+};
+
+export type UpdateListItemMutationVariables = {
+  condition?: ModelListItemConditionInput | null,
+  input: UpdateListItemInput,
+};
+
+export type UpdateListItemMutation = {
+  updateListItem?:  {
+    __typename: "ListItem",
+    categoryId?: string | null,
+    createdAt: string,
+    id: string,
+    isCompleted?: boolean | null,
+    name?: string | null,
+    quantity?: number | null,
+    sortOrder?: number | null,
+    updatedAt: string,
+  } | null,
+};
+
+export type OnCreateCategorySubscriptionVariables = {
+  filter?: ModelSubscriptionCategoryFilterInput | null,
+};
+
+export type OnCreateCategorySubscription = {
+  onCreateCategory?:  {
+    __typename: "Category",
+    color?: string | null,
+    createdAt: string,
+    id: string,
+    name?: string | null,
+    updatedAt: string,
+  } | null,
+};
+
+export type OnCreateListItemSubscriptionVariables = {
+  filter?: ModelSubscriptionListItemFilterInput | null,
+};
+
+export type OnCreateListItemSubscription = {
+  onCreateListItem?:  {
+    __typename: "ListItem",
+    categoryId?: string | null,
+    createdAt: string,
+    id: string,
+    isCompleted?: boolean | null,
+    name?: string | null,
+    quantity?: number | null,
+    sortOrder?: number | null,
+    updatedAt: string,
+  } | null,
+};
+
+export type OnDeleteCategorySubscriptionVariables = {
+  filter?: ModelSubscriptionCategoryFilterInput | null,
+};
+
+export type OnDeleteCategorySubscription = {
+  onDeleteCategory?:  {
+    __typename: "Category",
+    color?: string | null,
+    createdAt: string,
+    id: string,
+    name?: string | null,
+    updatedAt: string,
+  } | null,
+};
+
+export type OnDeleteListItemSubscriptionVariables = {
+  filter?: ModelSubscriptionListItemFilterInput | null,
+};
+
+export type OnDeleteListItemSubscription = {
+  onDeleteListItem?:  {
+    __typename: "ListItem",
+    categoryId?: string | null,
+    createdAt: string,
+    id: string,
+    isCompleted?: boolean | null,
+    name?: string | null,
+    quantity?: number | null,
+    sortOrder?: number | null,
+    updatedAt: string,
+  } | null,
+};
+
+export type OnUpdateCategorySubscriptionVariables = {
+  filter?: ModelSubscriptionCategoryFilterInput | null,
+};
+
+export type OnUpdateCategorySubscription = {
+  onUpdateCategory?:  {
+    __typename: "Category",
+    color?: string | null,
+    createdAt: string,
+    id: string,
+    name?: string | null,
+    updatedAt: string,
+  } | null,
+};
+
+export type OnUpdateListItemSubscriptionVariables = {
+  filter?: ModelSubscriptionListItemFilterInput | null,
+};
+
+export type OnUpdateListItemSubscription = {
+  onUpdateListItem?:  {
+    __typename: "ListItem",
+    categoryId?: string | null,
+    createdAt: string,
+    id: string,
+    isCompleted?: boolean | null,
+    name?: string | null,
+    quantity?: number | null,
+    sortOrder?: number | null,
+    updatedAt: string,
+  } | null,
+};
