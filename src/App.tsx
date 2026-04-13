@@ -144,7 +144,12 @@ const SortableItem = ({
     >
       {/* Background Actions (Delete) */}
       <div className="absolute inset-y-0 right-0 flex w-20 items-center justify-end pr-5 bg-red-500 rounded-lg">
-        <button onClick={() => onDelete(item.id)} className="text-white p-1 hover:scale-110 transition-transform">
+        <button
+          type="button"
+          onClick={() => onDelete(item.id)}
+          className="text-white p-1 hover:scale-110 transition-transform"
+          aria-label="Delete item"
+        >
           <Trash2 size={20} />
         </button>
       </div>
@@ -166,9 +171,11 @@ const SortableItem = ({
         </div>
 
         <div className="flex-1 flex items-center gap-3 overflow-hidden">
-          <button 
-            onClick={() => { resetSwipe(); onToggle(item.id, !!item.isCompleted); }} 
+          <button
+            type="button"
+            onClick={() => { resetSwipe(); onToggle(item.id, !!item.isCompleted); }}
             className="flex-shrink-0 cursor-pointer"
+            aria-label={item.isCompleted ? 'Mark item incomplete' : 'Mark item complete'}
           >
             {item.isCompleted ? (
               <CheckCircle2 size={24} className="text-zinc-800 dark:text-zinc-200 transition-colors" />
@@ -194,9 +201,11 @@ const SortableItem = ({
               x{item.quantity}
             </span>
           )}
-          <button 
-            onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} 
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onDelete(item.id); }}
             className="p-1 text-zinc-400 hover:text-red-500 dark:text-zinc-600 dark:hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+            aria-label="Delete item"
             title="Delete item"
           >
             <Trash2 size={16} />
@@ -228,7 +237,8 @@ const TeaserView = () => {
       </p>
 
       <div className="space-y-3">
-        <button 
+        <button
+          type="button"
           onClick={() => triggerTeaser('Coming Soon: Send link to WhatsApp')}
           className="w-full flex items-center justify-between p-4 bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-zinc-200 dark:border-zinc-800 active:scale-[0.98] transition-transform"
         >
@@ -244,7 +254,8 @@ const TeaserView = () => {
           <LinkIcon size={18} className="text-zinc-300 dark:text-zinc-600" />
         </button>
 
-        <button 
+        <button
+          type="button"
           onClick={() => triggerTeaser('Coming Soon: Generate PDF Document')}
           className="w-full flex items-center justify-between p-4 bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-zinc-200 dark:border-zinc-800 active:scale-[0.98] transition-transform"
         >
@@ -448,9 +459,11 @@ export default function App() {
         <header className="px-6 pt-10 pb-4 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md sticky top-0 z-20 border-b border-zinc-200 dark:border-zinc-900">
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold tracking-tight">AirList</h1>
-            <button 
+            <button
+              type="button"
               onClick={() => setIsDark(!isDark)}
               className="p-1.5 rounded-md bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 active:scale-95 transition-transform"
+              aria-label="Toggle theme"
             >
               {isDark ? <Sun size={18} /> : <Moon size={18} />}
             </button>
@@ -467,6 +480,7 @@ export default function App() {
               {/* Category Filter Horizontal Scroll */}
               <div className="px-6 py-4 flex gap-2 overflow-x-auto no-scrollbar snap-x">
                 <button
+                  type="button"
                   onClick={() => setSelectedCategory(null)}
                   className={`snap-start whitespace-nowrap px-3 py-1.5 rounded text-xs font-semibold uppercase tracking-wider transition-all ${
                     selectedCategory === null 
@@ -479,6 +493,7 @@ export default function App() {
                 {categories.map(cat => (
                   <button
                     key={cat.id}
+                    type="button"
                     onClick={() => setSelectedCategory(cat.id)}
                     className={`snap-start whitespace-nowrap px-3 py-1.5 rounded text-xs font-semibold uppercase tracking-wider transition-all ${
                       selectedCategory === cat.id
@@ -523,7 +538,8 @@ export default function App() {
             <div className="p-6 animate-in fade-in duration-200">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold">Categories</h2>
-                <button 
+                <button
+                  type="button"
                   onClick={() => setIsAddCatModalOpen(true)}
                   className="text-zinc-900 dark:text-white font-semibold text-sm flex items-center gap-1 bg-zinc-200 dark:bg-zinc-800 px-3 py-1.5 rounded-md"
                 >
@@ -538,9 +554,11 @@ export default function App() {
                       <div className={`w-3 h-3 rounded-sm ${colorClasses[cat.color ?? 'gray'].bg}`} />
                       <span className="font-medium text-sm">{cat.name}</span>
                     </div>
-                  <button 
+                  <button
+                    type="button"
                     onClick={() => deleteCategory(cat.id)}
                     className="p-1.5 text-zinc-400 hover:text-red-500 transition-colors cursor-pointer"
+                    aria-label={`Delete ${cat.name} category`}
                   >
                       <Trash2 size={16} />
                     </button>
@@ -558,8 +576,10 @@ export default function App() {
         {/* FLOATING ACTION BUTTON */}
         {activeTab === 'list' && (
           <button
+            type="button"
             onClick={() => setIsAddModalOpen(true)}
             className="fixed bottom-24 right-6 w-12 h-12 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-xl shadow-lg flex items-center justify-center active:scale-95 transition-transform z-30"
+            aria-label="Add new item"
           >
             <Plus size={24} />
           </button>
@@ -569,6 +589,7 @@ export default function App() {
         <nav className="fixed bottom-0 w-full bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-900 pb-safe z-40">
           <div className="flex items-center justify-around p-1 pb-5 pt-2 max-w-md mx-auto">
             <button
+              type="button"
               onClick={() => setActiveTab('list')}
               className={`flex flex-col items-center gap-1 p-2 w-20 transition-colors ${activeTab === 'list' ? 'text-zinc-900 dark:text-white' : 'text-zinc-400 dark:text-zinc-600 hover:text-zinc-600 dark:hover:text-zinc-400'}`}
             >
@@ -576,6 +597,7 @@ export default function App() {
               <span className="text-[10px] font-semibold tracking-wide">List</span>
             </button>
             <button
+              type="button"
               onClick={() => setActiveTab('categories')}
               className={`flex flex-col items-center gap-1 p-2 w-20 transition-colors ${activeTab === 'categories' ? 'text-zinc-900 dark:text-white' : 'text-zinc-400 dark:text-zinc-600 hover:text-zinc-600 dark:hover:text-zinc-400'}`}
             >
@@ -583,6 +605,7 @@ export default function App() {
               <span className="text-[10px] font-semibold tracking-wide">Categories</span>
             </button>
             <button
+              type="button"
               onClick={() => setActiveTab('teaser')}
               className={`flex flex-col items-center gap-1 p-2 w-20 transition-colors ${activeTab === 'teaser' ? 'text-zinc-900 dark:text-white' : 'text-zinc-400 dark:text-zinc-600 hover:text-zinc-600 dark:hover:text-zinc-400'}`}
             >
@@ -598,7 +621,12 @@ export default function App() {
             <div className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-xl p-5 shadow-2xl border border-zinc-200 dark:border-zinc-800 animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 sm:zoom-in-95">
               <div className="flex justify-between items-center mb-5">
                 <h3 className="text-lg font-bold">New Item</h3>
-                <button onClick={() => setIsAddModalOpen(false)} className="p-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-md text-zinc-500">
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="p-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-md text-zinc-500"
+                  aria-label="Close add item dialog"
+                >
                   <X size={18} />
                 </button>
               </div>
@@ -616,8 +644,9 @@ export default function App() {
                 
                 <div className="flex gap-3">
                   <div className="flex-1">
-                    <label className="block text-[10px] font-semibold text-zinc-500 mb-1.5 uppercase tracking-wider">Category</label>
+                    <label htmlFor="new-item-category" className="block text-[10px] font-semibold text-zinc-500 mb-1.5 uppercase tracking-wider">Category</label>
                     <select
+                      id="new-item-category"
                       value={newItemCat}
                       onChange={e => setNewItemCat(e.target.value)}
                       className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-zinc-400 appearance-none"
@@ -655,7 +684,12 @@ export default function App() {
             <div className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-xl p-5 shadow-2xl border border-zinc-200 dark:border-zinc-800 animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 sm:zoom-in-95">
               <div className="flex justify-between items-center mb-5">
                 <h3 className="text-lg font-bold">New Category</h3>
-                <button onClick={() => setIsAddCatModalOpen(false)} className="p-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-md text-zinc-500">
+                <button
+                  type="button"
+                  onClick={() => setIsAddCatModalOpen(false)}
+                  className="p-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-md text-zinc-500"
+                  aria-label="Close add category dialog"
+                >
                   <X size={18} />
                 </button>
               </div>
@@ -680,6 +714,7 @@ export default function App() {
                         type="button"
                         onClick={() => setNewCatColor(color)}
                         className={`w-8 h-8 rounded-md ${colorClasses[color].bg} flex items-center justify-center transition-transform ${newCatColor === color ? 'scale-110 ring-2 ring-offset-2 ring-zinc-900 dark:ring-white dark:ring-offset-zinc-900' : 'scale-100'}`}
+                        aria-label={`Choose ${color} category color`}
                       >
                         {newCatColor === color && <CheckCircle2 size={16} className="text-white" />}
                       </button>
