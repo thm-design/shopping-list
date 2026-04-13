@@ -1,98 +1,15 @@
 import React, { useState, useEffect, useRef, useMemo, createContext } from 'react';
+import { generateClient } from "aws-amplify/data";
+import type { Schema } from "../amplify/data/resource";
 import {
   ShoppingBag, Moon, Sun, Plus, Trash2, Share2, FileDown,
   CheckCircle2, Circle, X, Tag, ListTodo, MessageCircle, Link as LinkIcon, Download, Sparkles, GripVertical
 } from 'lucide-react';
 
-// ============================================================================
-// AMPLIFY GEN 2 MOCK SCHEMA & CLIENT
-// ============================================================================
+const client = generateClient<Schema>();
 
-export type Category = {
-  id: string;
-  name: string;
-  color: string;
-};
-
-export type ListItem = {
-  id: string;
-  name: string;
-  categoryId: string;
-  isCompleted: boolean;
-  quantity: number;
-  sortOrder: number; // Added for Custom Sort functionality
-};
-
-// Mock Initial Data
-const MOCK_CATEGORIES: Category[] = [
-  { id: 'c1', name: 'Produce', color: 'green' },
-  { id: 'c2', name: 'Meat', color: 'red' },
-  { id: 'c3', name: 'Dairy', color: 'blue' },
-  { id: 'c4', name: 'Pantry', color: 'orange' },
-  { id: 'c5', name: 'General', color: 'gray' },
-];
-
-const MOCK_ITEMS: ListItem[] = [
-  { id: 'i1', name: 'Avocados', categoryId: 'c1', isCompleted: false, quantity: 3, sortOrder: 0 },
-  { id: 'i2', name: 'Ribeye Steak', categoryId: 'c2', isCompleted: false, quantity: 2, sortOrder: 1 },
-  { id: 'i3', name: 'Almond Milk', categoryId: 'c3', isCompleted: true, quantity: 1, sortOrder: 2 },
-  { id: 'i4', name: 'Pasta', categoryId: 'c4', isCompleted: false, quantity: 2, sortOrder: 3 },
-  { id: 'i5', name: 'Paper Towels', categoryId: 'c5', isCompleted: false, quantity: 1, sortOrder: 4 },
-];
-
-// Mocking the Amplify `generateClient<Schema>()` API
-const generateMockClient = () => {
-  let items = [...MOCK_ITEMS];
-  let categories = [...MOCK_CATEGORIES];
-
-  const simulateNetwork = (ms = 200) => new Promise(res => setTimeout(res, ms));
-
-  return {
-    models: {
-      ListItem: {
-        list: async () => { await simulateNetwork(); return { data: [...items] }; },
-        create: async (data: Omit<ListItem, 'id'>) => {
-          await simulateNetwork(100);
-          const newItem = { ...data, id: Math.random().toString(36).substring(7) };
-          items = [newItem, ...items];
-          return { data: newItem };
-        },
-        update: async (data: Partial<ListItem> & { id: string }) => {
-          await simulateNetwork(100);
-          items = items.map(i => i.id === data.id ? { ...i, ...data } : i);
-          return { data: items.find(i => i.id === data.id)! };
-        },
-        delete: async ({ id }: { id: string }) => {
-          await simulateNetwork(100);
-          items = items.filter(i => i.id !== id);
-          return { data: { id } };
-        }
-      },
-      Category: {
-        list: async () => { await simulateNetwork(); return { data: [...categories] }; },
-        create: async (data: Omit<Category, 'id'>) => {
-          await simulateNetwork(100);
-          const newCategory = { ...data, id: Math.random().toString(36).substring(7) };
-          categories = [...categories, newCategory];
-          return { data: newCategory };
-        },
-        update: async (data: Partial<Category> & { id: string }) => {
-          await simulateNetwork(100);
-          categories = categories.map(c => c.id === data.id ? { ...c, ...data } : c);
-          return { data: categories.find(c => c.id === data.id)! };
-        },
-        delete: async ({ id }: { id: string }) => {
-          await simulateNetwork(100);
-          categories = categories.filter(c => c.id !== id);
-          items = items.filter(i => i.categoryId !== id); // Cleanup orphans
-          return { data: { id } };
-        }
-      }
-    }
-  };
-};
-
-const client = generateMockClient();
+export type Category = Schema['Category']['type'];
+export type ListItem = Schema['ListItem']['type'];
 
 // ============================================================================
 // THEME & COLOR UTILITIES
@@ -108,7 +25,15 @@ const colorClasses: Record<string, { bg: string, text: string, pillBg: string }>
   gray: { bg: 'bg-zinc-500', text: 'text-zinc-500', pillBg: 'bg-zinc-100 dark:bg-zinc-500/20 text-zinc-700 dark:text-zinc-400' },
 };
 
-const AVAILABLE_COLORS = Object.keys(colorClasses);
+const DEFAULT_CATEGORIES = [
+  { name: 'Produce', color: 'green' },
+  { name: 'Meat', color: 'red' },
+  { name: 'Dairy', color: 'blue' },
+  { name: 'Pantry', color: 'orange' },
+  { name: 'General', color: 'gray' },
+] as const;
+
+const AVAILABLE_COLORS = Object.keys(colorClasses).filter(k => k !== 'text');
 
 // ============================================================================
 // CONTEXTS
@@ -212,7 +137,7 @@ const SortableItem = ({
 
   return (
     <div 
-      className="relative mb-2 group"
+      className="relative mb-2 group cursor-pointer"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -236,12 +161,15 @@ const SortableItem = ({
         onTouchEnd={handleTouchEnd}
         onMouseLeave={resetSwipe}
       >
-        <div className="drag-handle p-2 -ml-2 mr-1 cursor-grab active:cursor-grabbing text-zinc-300 dark:text-zinc-700 hover:text-zinc-500 transition-colors touch-none">
+        <div className="drag-handle p-2 -ml-2 mr-1 cursor-grab active:cursor-grabbing text-zinc-300 dark:text-zinc-700 hover:text-zinc-500 transition-colors touch-none select-none">
           <GripVertical size={18} />
         </div>
 
         <div className="flex-1 flex items-center gap-3 overflow-hidden">
-          <button onClick={() => { resetSwipe(); onToggle(item.id, item.isCompleted); }} className="flex-shrink-0">
+          <button 
+            onClick={() => { resetSwipe(); onToggle(item.id, !!item.isCompleted); }} 
+            className="flex-shrink-0 cursor-pointer"
+          >
             {item.isCompleted ? (
               <CheckCircle2 size={24} className="text-zinc-800 dark:text-zinc-200 transition-colors" />
             ) : (
@@ -252,8 +180,8 @@ const SortableItem = ({
             <span className={`text-base font-medium truncate transition-all ${item.isCompleted ? 'text-zinc-400 dark:text-zinc-500 line-through' : 'text-zinc-900 dark:text-zinc-100'}`}>
               {item.name}
             </span>
-            {category && (
-              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded w-fit mt-0.5 uppercase tracking-wider ${colorClasses[category.color]?.pillBg || colorClasses.gray.pillBg}`}>
+            {category?.color && (
+              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded w-fit mt-0.5 uppercase tracking-wider ${colorClasses[category.color as string]?.pillBg || colorClasses.gray.pillBg}`}>
                 {category.name}
               </span>
             )}
@@ -261,11 +189,18 @@ const SortableItem = ({
         </div>
         
         <div className="flex items-center gap-2 pl-3">
-          {item.quantity > 1 && (
+          {item.quantity != null && item.quantity > 1 && (
             <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">
               x{item.quantity}
             </span>
           )}
+          <button 
+            onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} 
+            className="p-1 text-zinc-400 hover:text-red-500 dark:text-zinc-600 dark:hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+            title="Delete item"
+          >
+            <Trash2 size={16} />
+          </button>
         </div>
       </div>
     </div>
@@ -367,19 +302,40 @@ export default function App() {
     const fetchData = async () => {
       try {
         const [{ data: cats }, { data: itms }] = await Promise.all([
-          client.models.Category.list(),
-          client.models.ListItem.list()
+          client.models.Category.list({}),
+          client.models.ListItem.list({})
         ]);
-        setCategories(cats);
-        setItems(itms.sort((a, b) => a.sortOrder - b.sortOrder));
-        if (cats.length > 0) setNewItemCat(cats[0].id);
+        const validCats = cats.filter(Boolean);
+        const validItems = itms.filter(Boolean);
+        
+        // Seed default categories if none exist
+        if (validCats.length === 0) {
+          const createdCats: Category[] = [];
+          for (const cat of DEFAULT_CATEGORIES) {
+            const { data: newCat } = await client.models.Category.create(cat);
+            if (newCat) createdCats.push(newCat);
+          }
+          setCategories(createdCats);
+        } else {
+          setCategories(validCats);
+        }
+        
+        setItems(validItems.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)));
+        if (validCats.length > 0) setNewItemCat(validCats[0].id);
       } catch (err) {
         console.error("Failed to fetch data", err);
       }
     };
     
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) setIsDark(true);
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (mediaQuery.matches) setIsDark(true);
+    
+    const handleChange = (e: MediaQueryListEvent) => setIsDark(e.matches);
+    mediaQuery.addEventListener('change', handleChange);
     fetchData();
+    
+    return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
   useEffect(() => {
@@ -393,8 +349,8 @@ export default function App() {
       result = items.filter(i => i.categoryId === selectedCategory);
     }
     return result.sort((a, b) => {
-      if (a.isCompleted === b.isCompleted) return a.sortOrder - b.sortOrder;
-      return a.isCompleted ? 1 : -1; // Uncompleted always float to top if we aren't strict on absolute sort order
+      if (a.isCompleted === b.isCompleted) return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+      return a.isCompleted ? 1 : -1;
     });
   }, [items, selectedCategory]);
 
@@ -436,18 +392,15 @@ export default function App() {
       client.models.ListItem.update({ id: item.id, sortOrder: item.sortOrder });
     });
 
-    // 4. Create "Custom Sort" category if it doesn't exist
     const customSortName = "Custom Sort";
-    let customCat = categories.find(c => c.name === customSortName);
+    const customCat = categories.find(c => c.name === customSortName);
     
     if (!customCat) {
       const { data } = await client.models.Category.create({
         name: customSortName,
         color: 'purple'
       });
-      setCategories(prev => [...prev, data]);
-      // Optional: Auto-select it to show the user what happened
-      // setSelectedCategory(data.id); 
+      if (data) setCategories(prev => [...prev, data]);
     }
   };
 
@@ -468,7 +421,7 @@ export default function App() {
     setNewItemQty(1);
 
     const { data } = await client.models.ListItem.create(payload);
-    setItems(prev => [...prev, data]);
+    if (data) setItems(prev => [...prev, data]);
   };
 
   const handleAddCategory = async (e: React.FormEvent) => {
@@ -480,7 +433,7 @@ export default function App() {
       name: newCatName.trim(),
       color: newCatColor
     });
-    setCategories(prev => [...prev, data]);
+    if (data) setCategories(prev => [...prev, data]);
     setNewCatName('');
     setNewCatColor('gray');
   };
@@ -529,8 +482,8 @@ export default function App() {
                     onClick={() => setSelectedCategory(cat.id)}
                     className={`snap-start whitespace-nowrap px-3 py-1.5 rounded text-xs font-semibold uppercase tracking-wider transition-all ${
                       selectedCategory === cat.id
-                         ? `${colorClasses[cat.color].bg} text-white shadow-sm`
-                         : `${colorClasses[cat.color].pillBg} border border-transparent`
+                         ? `${colorClasses[cat.color ?? 'gray'].bg} text-white shadow-sm`
+                         : `${colorClasses[cat.color ?? 'gray'].pillBg} border border-transparent`
                     }`}
                   >
                     {cat.name}
@@ -551,7 +504,7 @@ export default function App() {
                       <SortableItem
                         key={item.id}
                         item={item}
-                        category={categories.find(c => c.id === item.categoryId)}
+                        category={categories.find(c => c.id === item.categoryId) ?? undefined}
                         onToggle={toggleItem}
                         onDelete={deleteItem}
                         draggedId={draggedId}
@@ -569,7 +522,7 @@ export default function App() {
           {activeTab === 'categories' && (
             <div className="p-6 animate-in fade-in duration-200">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold">Categories & Tags</h2>
+                <h2 className="text-xl font-bold">Categories</h2>
                 <button 
                   onClick={() => setIsAddCatModalOpen(true)}
                   className="text-zinc-900 dark:text-white font-semibold text-sm flex items-center gap-1 bg-zinc-200 dark:bg-zinc-800 px-3 py-1.5 rounded-md"
@@ -582,13 +535,13 @@ export default function App() {
                 {categories.map(cat => (
                   <div key={cat.id} className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg">
                     <div className="flex items-center gap-3">
-                      <div className={`w-3 h-3 rounded-sm ${colorClasses[cat.color].bg}`} />
+                      <div className={`w-3 h-3 rounded-sm ${colorClasses[cat.color ?? 'gray'].bg}`} />
                       <span className="font-medium text-sm">{cat.name}</span>
                     </div>
-                    <button 
-                      onClick={() => deleteCategory(cat.id)}
-                      className="p-1.5 text-zinc-400 hover:text-red-500 transition-colors"
-                    >
+                  <button 
+                    onClick={() => deleteCategory(cat.id)}
+                    className="p-1.5 text-zinc-400 hover:text-red-500 transition-colors cursor-pointer"
+                  >
                       <Trash2 size={16} />
                     </button>
                   </div>
@@ -627,7 +580,7 @@ export default function App() {
               className={`flex flex-col items-center gap-1 p-2 w-20 transition-colors ${activeTab === 'categories' ? 'text-zinc-900 dark:text-white' : 'text-zinc-400 dark:text-zinc-600 hover:text-zinc-600 dark:hover:text-zinc-400'}`}
             >
               <Tag size={20} />
-              <span className="text-[10px] font-semibold tracking-wide">Tags</span>
+              <span className="text-[10px] font-semibold tracking-wide">Categories</span>
             </button>
             <button
               onClick={() => setActiveTab('teaser')}

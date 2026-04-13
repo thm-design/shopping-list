@@ -47,4 +47,4 @@ export default defineConfig([{
             allowConstantExport: true,
         }],
     },
-}, globalIgnores(["**/dist"])]);
+}, globalIgnores(["**/dist", "**/.amplify/**", "**/node_modules/**", "**/*.js", "**/*.mjs"])]);

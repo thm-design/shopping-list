@@ -11,12 +11,11 @@ const schema = a.schema({
   ListItem: a
     .model({
       name: a.string(),
-      categoryId: a.id(),
+      categoryId: a.string(),
       isCompleted: a.boolean(),
       quantity: a.integer(),
       sortOrder: a.integer(),
     })
-    .belongsTo(() => Category, 'categoryId')
     .authorization((allow) => [allow.publicApiKey()]),
 });
 
