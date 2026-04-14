@@ -1,21 +1,46 @@
 /* tslint:disable */
+/* eslint-disable */
 //  This file was automatically generated and should not be edited.
 
-export type Todo = {
-  __typename: "Todo",
-  content?: string | null,
+export type Category = {
+  __typename: "Category",
+  color?: string | null,
   createdAt: string,
   id: string,
+  name?: string | null,
   updatedAt: string,
 };
 
-export type ModelTodoFilterInput = {
-  and?: Array< ModelTodoFilterInput | null > | null,
-  content?: ModelStringInput | null,
+export type ListItem = {
+  __typename: "ListItem",
+  categoryId?: string | null,
+  createdAt: string,
+  id: string,
+  isCompleted?: boolean | null,
+  name?: string | null,
+  quantity?: number | null,
+  sortOrder?: number | null,
+  updatedAt: string,
+};
+
+export type UserPreference = {
+  __typename: "UserPreference",
+  createdAt: string,
+  id: string,
+  sortMode?: string | null,
+  theme?: string | null,
+  updatedAt: string,
+  userKey?: string | null,
+};
+
+export type ModelCategoryFilterInput = {
+  and?: Array< ModelCategoryFilterInput | null > | null,
+  color?: ModelStringInput | null,
   createdAt?: ModelStringInput | null,
   id?: ModelIDInput | null,
-  not?: ModelTodoFilterInput | null,
-  or?: Array< ModelTodoFilterInput | null > | null,
+  name?: ModelStringInput | null,
+  not?: ModelCategoryFilterInput | null,
+  or?: Array< ModelCategoryFilterInput | null > | null,
   updatedAt?: ModelStringInput | null,
 };
 
@@ -75,41 +100,166 @@ export type ModelIDInput = {
   size?: ModelSizeInput | null,
 };
 
-export type ModelTodoConnection = {
-  __typename: "ModelTodoConnection",
-  items:  Array<Todo | null >,
+export type ModelCategoryConnection = {
+  __typename: "ModelCategoryConnection",
+  items:  Array<Category | null >,
   nextToken?: string | null,
 };
 
-export type ModelTodoConditionInput = {
-  and?: Array< ModelTodoConditionInput | null > | null,
-  content?: ModelStringInput | null,
+export type ModelListItemFilterInput = {
+  and?: Array< ModelListItemFilterInput | null > | null,
+  categoryId?: ModelStringInput | null,
   createdAt?: ModelStringInput | null,
-  not?: ModelTodoConditionInput | null,
-  or?: Array< ModelTodoConditionInput | null > | null,
+  id?: ModelIDInput | null,
+  isCompleted?: ModelBooleanInput | null,
+  name?: ModelStringInput | null,
+  not?: ModelListItemFilterInput | null,
+  or?: Array< ModelListItemFilterInput | null > | null,
+  quantity?: ModelIntInput | null,
+  sortOrder?: ModelIntInput | null,
   updatedAt?: ModelStringInput | null,
 };
 
-export type CreateTodoInput = {
-  content?: string | null,
+export type ModelBooleanInput = {
+  attributeExists?: boolean | null,
+  attributeType?: ModelAttributeTypes | null,
+  eq?: boolean | null,
+  ne?: boolean | null,
+};
+
+export type ModelIntInput = {
+  attributeExists?: boolean | null,
+  attributeType?: ModelAttributeTypes | null,
+  between?: Array< number | null > | null,
+  eq?: number | null,
+  ge?: number | null,
+  gt?: number | null,
+  le?: number | null,
+  lt?: number | null,
+  ne?: number | null,
+};
+
+export type ModelListItemConnection = {
+  __typename: "ModelListItemConnection",
+  items:  Array<ListItem | null >,
+  nextToken?: string | null,
+};
+
+export type ModelUserPreferenceFilterInput = {
+  and?: Array< ModelUserPreferenceFilterInput | null > | null,
+  createdAt?: ModelStringInput | null,
+  id?: ModelIDInput | null,
+  not?: ModelUserPreferenceFilterInput | null,
+  or?: Array< ModelUserPreferenceFilterInput | null > | null,
+  sortMode?: ModelStringInput | null,
+  theme?: ModelStringInput | null,
+  updatedAt?: ModelStringInput | null,
+  userKey?: ModelStringInput | null,
+};
+
+export type ModelUserPreferenceConnection = {
+  __typename: "ModelUserPreferenceConnection",
+  items:  Array<UserPreference | null >,
+  nextToken?: string | null,
+};
+
+export type ModelCategoryConditionInput = {
+  and?: Array< ModelCategoryConditionInput | null > | null,
+  color?: ModelStringInput | null,
+  createdAt?: ModelStringInput | null,
+  name?: ModelStringInput | null,
+  not?: ModelCategoryConditionInput | null,
+  or?: Array< ModelCategoryConditionInput | null > | null,
+  updatedAt?: ModelStringInput | null,
+};
+
+export type CreateCategoryInput = {
+  color?: string | null,
   id?: string | null,
+  name?: string | null,
 };
 
-export type DeleteTodoInput = {
+export type ModelListItemConditionInput = {
+  and?: Array< ModelListItemConditionInput | null > | null,
+  categoryId?: ModelStringInput | null,
+  createdAt?: ModelStringInput | null,
+  isCompleted?: ModelBooleanInput | null,
+  name?: ModelStringInput | null,
+  not?: ModelListItemConditionInput | null,
+  or?: Array< ModelListItemConditionInput | null > | null,
+  quantity?: ModelIntInput | null,
+  sortOrder?: ModelIntInput | null,
+  updatedAt?: ModelStringInput | null,
+};
+
+export type CreateListItemInput = {
+  categoryId?: string | null,
+  id?: string | null,
+  isCompleted?: boolean | null,
+  name?: string | null,
+  quantity?: number | null,
+  sortOrder?: number | null,
+};
+
+export type ModelUserPreferenceConditionInput = {
+  and?: Array< ModelUserPreferenceConditionInput | null > | null,
+  createdAt?: ModelStringInput | null,
+  not?: ModelUserPreferenceConditionInput | null,
+  or?: Array< ModelUserPreferenceConditionInput | null > | null,
+  sortMode?: ModelStringInput | null,
+  theme?: ModelStringInput | null,
+  updatedAt?: ModelStringInput | null,
+  userKey?: ModelStringInput | null,
+};
+
+export type CreateUserPreferenceInput = {
+  id?: string | null,
+  sortMode?: string | null,
+  theme?: string | null,
+  userKey?: string | null,
+};
+
+export type DeleteCategoryInput = {
   id: string,
 };
 
-export type UpdateTodoInput = {
-  content?: string | null,
+export type DeleteListItemInput = {
   id: string,
 };
 
-export type ModelSubscriptionTodoFilterInput = {
-  and?: Array< ModelSubscriptionTodoFilterInput | null > | null,
-  content?: ModelSubscriptionStringInput | null,
+export type DeleteUserPreferenceInput = {
+  id: string,
+};
+
+export type UpdateCategoryInput = {
+  color?: string | null,
+  id: string,
+  name?: string | null,
+};
+
+export type UpdateListItemInput = {
+  categoryId?: string | null,
+  id: string,
+  isCompleted?: boolean | null,
+  name?: string | null,
+  quantity?: number | null,
+  sortOrder?: number | null,
+};
+
+export type UpdateUserPreferenceInput = {
+  id: string,
+  sortMode?: string | null,
+  theme?: string | null,
+  userKey?: string | null,
+};
+
+export type ModelSubscriptionCategoryFilterInput = {
+  and?: Array< ModelSubscriptionCategoryFilterInput | null > | null,
+  color?: ModelSubscriptionStringInput | null,
   createdAt?: ModelSubscriptionStringInput | null,
   id?: ModelSubscriptionIDInput | null,
-  or?: Array< ModelSubscriptionTodoFilterInput | null > | null,
+  name?: ModelSubscriptionStringInput | null,
+  or?: Array< ModelSubscriptionCategoryFilterInput | null > | null,
   updatedAt?: ModelSubscriptionStringInput | null,
 };
 
@@ -143,123 +293,462 @@ export type ModelSubscriptionIDInput = {
   notIn?: Array< string | null > | null,
 };
 
-export type GetTodoQueryVariables = {
+export type ModelSubscriptionListItemFilterInput = {
+  and?: Array< ModelSubscriptionListItemFilterInput | null > | null,
+  categoryId?: ModelSubscriptionStringInput | null,
+  createdAt?: ModelSubscriptionStringInput | null,
+  id?: ModelSubscriptionIDInput | null,
+  isCompleted?: ModelSubscriptionBooleanInput | null,
+  name?: ModelSubscriptionStringInput | null,
+  or?: Array< ModelSubscriptionListItemFilterInput | null > | null,
+  quantity?: ModelSubscriptionIntInput | null,
+  sortOrder?: ModelSubscriptionIntInput | null,
+  updatedAt?: ModelSubscriptionStringInput | null,
+};
+
+export type ModelSubscriptionBooleanInput = {
+  eq?: boolean | null,
+  ne?: boolean | null,
+};
+
+export type ModelSubscriptionIntInput = {
+  between?: Array< number | null > | null,
+  eq?: number | null,
+  ge?: number | null,
+  gt?: number | null,
+  in?: Array< number | null > | null,
+  le?: number | null,
+  lt?: number | null,
+  ne?: number | null,
+  notIn?: Array< number | null > | null,
+};
+
+export type ModelSubscriptionUserPreferenceFilterInput = {
+  and?: Array< ModelSubscriptionUserPreferenceFilterInput | null > | null,
+  createdAt?: ModelSubscriptionStringInput | null,
+  id?: ModelSubscriptionIDInput | null,
+  or?: Array< ModelSubscriptionUserPreferenceFilterInput | null > | null,
+  sortMode?: ModelSubscriptionStringInput | null,
+  theme?: ModelSubscriptionStringInput | null,
+  updatedAt?: ModelSubscriptionStringInput | null,
+  userKey?: ModelSubscriptionStringInput | null,
+};
+
+export type GetCategoryQueryVariables = {
   id: string,
 };
 
-export type GetTodoQuery = {
-  getTodo?:  {
-    __typename: "Todo",
-    content?: string | null,
+export type GetCategoryQuery = {
+  getCategory?:  {
+    __typename: "Category",
+    color?: string | null,
     createdAt: string,
     id: string,
+    name?: string | null,
     updatedAt: string,
   } | null,
 };
 
-export type ListTodosQueryVariables = {
-  filter?: ModelTodoFilterInput | null,
+export type GetListItemQueryVariables = {
+  id: string,
+};
+
+export type GetListItemQuery = {
+  getListItem?:  {
+    __typename: "ListItem",
+    categoryId?: string | null,
+    createdAt: string,
+    id: string,
+    isCompleted?: boolean | null,
+    name?: string | null,
+    quantity?: number | null,
+    sortOrder?: number | null,
+    updatedAt: string,
+  } | null,
+};
+
+export type GetUserPreferenceQueryVariables = {
+  id: string,
+};
+
+export type GetUserPreferenceQuery = {
+  getUserPreference?:  {
+    __typename: "UserPreference",
+    createdAt: string,
+    id: string,
+    sortMode?: string | null,
+    theme?: string | null,
+    updatedAt: string,
+    userKey?: string | null,
+  } | null,
+};
+
+export type ListCategoriesQueryVariables = {
+  filter?: ModelCategoryFilterInput | null,
   limit?: number | null,
   nextToken?: string | null,
 };
 
-export type ListTodosQuery = {
-  listTodos?:  {
-    __typename: "ModelTodoConnection",
+export type ListCategoriesQuery = {
+  listCategories?:  {
+    __typename: "ModelCategoryConnection",
     items:  Array< {
-      __typename: "Todo",
-      content?: string | null,
+      __typename: "Category",
+      color?: string | null,
       createdAt: string,
       id: string,
+      name?: string | null,
       updatedAt: string,
     } | null >,
     nextToken?: string | null,
   } | null,
 };
 
-export type CreateTodoMutationVariables = {
-  condition?: ModelTodoConditionInput | null,
-  input: CreateTodoInput,
+export type ListListItemsQueryVariables = {
+  filter?: ModelListItemFilterInput | null,
+  limit?: number | null,
+  nextToken?: string | null,
 };
 
-export type CreateTodoMutation = {
-  createTodo?:  {
-    __typename: "Todo",
-    content?: string | null,
+export type ListListItemsQuery = {
+  listListItems?:  {
+    __typename: "ModelListItemConnection",
+    items:  Array< {
+      __typename: "ListItem",
+      categoryId?: string | null,
+      createdAt: string,
+      id: string,
+      isCompleted?: boolean | null,
+      name?: string | null,
+      quantity?: number | null,
+      sortOrder?: number | null,
+      updatedAt: string,
+    } | null >,
+    nextToken?: string | null,
+  } | null,
+};
+
+export type ListUserPreferencesQueryVariables = {
+  filter?: ModelUserPreferenceFilterInput | null,
+  limit?: number | null,
+  nextToken?: string | null,
+};
+
+export type ListUserPreferencesQuery = {
+  listUserPreferences?:  {
+    __typename: "ModelUserPreferenceConnection",
+    items:  Array< {
+      __typename: "UserPreference",
+      createdAt: string,
+      id: string,
+      sortMode?: string | null,
+      theme?: string | null,
+      updatedAt: string,
+      userKey?: string | null,
+    } | null >,
+    nextToken?: string | null,
+  } | null,
+};
+
+export type CreateCategoryMutationVariables = {
+  condition?: ModelCategoryConditionInput | null,
+  input: CreateCategoryInput,
+};
+
+export type CreateCategoryMutation = {
+  createCategory?:  {
+    __typename: "Category",
+    color?: string | null,
     createdAt: string,
     id: string,
+    name?: string | null,
     updatedAt: string,
   } | null,
 };
 
-export type DeleteTodoMutationVariables = {
-  condition?: ModelTodoConditionInput | null,
-  input: DeleteTodoInput,
+export type CreateListItemMutationVariables = {
+  condition?: ModelListItemConditionInput | null,
+  input: CreateListItemInput,
 };
 
-export type DeleteTodoMutation = {
-  deleteTodo?:  {
-    __typename: "Todo",
-    content?: string | null,
+export type CreateListItemMutation = {
+  createListItem?:  {
+    __typename: "ListItem",
+    categoryId?: string | null,
     createdAt: string,
     id: string,
+    isCompleted?: boolean | null,
+    name?: string | null,
+    quantity?: number | null,
+    sortOrder?: number | null,
     updatedAt: string,
   } | null,
 };
 
-export type UpdateTodoMutationVariables = {
-  condition?: ModelTodoConditionInput | null,
-  input: UpdateTodoInput,
+export type CreateUserPreferenceMutationVariables = {
+  condition?: ModelUserPreferenceConditionInput | null,
+  input: CreateUserPreferenceInput,
 };
 
-export type UpdateTodoMutation = {
-  updateTodo?:  {
-    __typename: "Todo",
-    content?: string | null,
+export type CreateUserPreferenceMutation = {
+  createUserPreference?:  {
+    __typename: "UserPreference",
     createdAt: string,
     id: string,
+    sortMode?: string | null,
+    theme?: string | null,
+    updatedAt: string,
+    userKey?: string | null,
+  } | null,
+};
+
+export type DeleteCategoryMutationVariables = {
+  condition?: ModelCategoryConditionInput | null,
+  input: DeleteCategoryInput,
+};
+
+export type DeleteCategoryMutation = {
+  deleteCategory?:  {
+    __typename: "Category",
+    color?: string | null,
+    createdAt: string,
+    id: string,
+    name?: string | null,
     updatedAt: string,
   } | null,
 };
 
-export type OnCreateTodoSubscriptionVariables = {
-  filter?: ModelSubscriptionTodoFilterInput | null,
+export type DeleteListItemMutationVariables = {
+  condition?: ModelListItemConditionInput | null,
+  input: DeleteListItemInput,
 };
 
-export type OnCreateTodoSubscription = {
-  onCreateTodo?:  {
-    __typename: "Todo",
-    content?: string | null,
+export type DeleteListItemMutation = {
+  deleteListItem?:  {
+    __typename: "ListItem",
+    categoryId?: string | null,
     createdAt: string,
     id: string,
+    isCompleted?: boolean | null,
+    name?: string | null,
+    quantity?: number | null,
+    sortOrder?: number | null,
     updatedAt: string,
   } | null,
 };
 
-export type OnDeleteTodoSubscriptionVariables = {
-  filter?: ModelSubscriptionTodoFilterInput | null,
+export type DeleteUserPreferenceMutationVariables = {
+  condition?: ModelUserPreferenceConditionInput | null,
+  input: DeleteUserPreferenceInput,
 };
 
-export type OnDeleteTodoSubscription = {
-  onDeleteTodo?:  {
-    __typename: "Todo",
-    content?: string | null,
+export type DeleteUserPreferenceMutation = {
+  deleteUserPreference?:  {
+    __typename: "UserPreference",
     createdAt: string,
     id: string,
+    sortMode?: string | null,
+    theme?: string | null,
+    updatedAt: string,
+    userKey?: string | null,
+  } | null,
+};
+
+export type UpdateCategoryMutationVariables = {
+  condition?: ModelCategoryConditionInput | null,
+  input: UpdateCategoryInput,
+};
+
+export type UpdateCategoryMutation = {
+  updateCategory?:  {
+    __typename: "Category",
+    color?: string | null,
+    createdAt: string,
+    id: string,
+    name?: string | null,
     updatedAt: string,
   } | null,
 };
 
-export type OnUpdateTodoSubscriptionVariables = {
-  filter?: ModelSubscriptionTodoFilterInput | null,
+export type UpdateListItemMutationVariables = {
+  condition?: ModelListItemConditionInput | null,
+  input: UpdateListItemInput,
 };
 
-export type OnUpdateTodoSubscription = {
-  onUpdateTodo?:  {
-    __typename: "Todo",
-    content?: string | null,
+export type UpdateListItemMutation = {
+  updateListItem?:  {
+    __typename: "ListItem",
+    categoryId?: string | null,
     createdAt: string,
     id: string,
+    isCompleted?: boolean | null,
+    name?: string | null,
+    quantity?: number | null,
+    sortOrder?: number | null,
     updatedAt: string,
+  } | null,
+};
+
+export type UpdateUserPreferenceMutationVariables = {
+  condition?: ModelUserPreferenceConditionInput | null,
+  input: UpdateUserPreferenceInput,
+};
+
+export type UpdateUserPreferenceMutation = {
+  updateUserPreference?:  {
+    __typename: "UserPreference",
+    createdAt: string,
+    id: string,
+    sortMode?: string | null,
+    theme?: string | null,
+    updatedAt: string,
+    userKey?: string | null,
+  } | null,
+};
+
+export type OnCreateCategorySubscriptionVariables = {
+  filter?: ModelSubscriptionCategoryFilterInput | null,
+};
+
+export type OnCreateCategorySubscription = {
+  onCreateCategory?:  {
+    __typename: "Category",
+    color?: string | null,
+    createdAt: string,
+    id: string,
+    name?: string | null,
+    updatedAt: string,
+  } | null,
+};
+
+export type OnCreateListItemSubscriptionVariables = {
+  filter?: ModelSubscriptionListItemFilterInput | null,
+};
+
+export type OnCreateListItemSubscription = {
+  onCreateListItem?:  {
+    __typename: "ListItem",
+    categoryId?: string | null,
+    createdAt: string,
+    id: string,
+    isCompleted?: boolean | null,
+    name?: string | null,
+    quantity?: number | null,
+    sortOrder?: number | null,
+    updatedAt: string,
+  } | null,
+};
+
+export type OnCreateUserPreferenceSubscriptionVariables = {
+  filter?: ModelSubscriptionUserPreferenceFilterInput | null,
+};
+
+export type OnCreateUserPreferenceSubscription = {
+  onCreateUserPreference?:  {
+    __typename: "UserPreference",
+    createdAt: string,
+    id: string,
+    sortMode?: string | null,
+    theme?: string | null,
+    updatedAt: string,
+    userKey?: string | null,
+  } | null,
+};
+
+export type OnDeleteCategorySubscriptionVariables = {
+  filter?: ModelSubscriptionCategoryFilterInput | null,
+};
+
+export type OnDeleteCategorySubscription = {
+  onDeleteCategory?:  {
+    __typename: "Category",
+    color?: string | null,
+    createdAt: string,
+    id: string,
+    name?: string | null,
+    updatedAt: string,
+  } | null,
+};
+
+export type OnDeleteListItemSubscriptionVariables = {
+  filter?: ModelSubscriptionListItemFilterInput | null,
+};
+
+export type OnDeleteListItemSubscription = {
+  onDeleteListItem?:  {
+    __typename: "ListItem",
+    categoryId?: string | null,
+    createdAt: string,
+    id: string,
+    isCompleted?: boolean | null,
+    name?: string | null,
+    quantity?: number | null,
+    sortOrder?: number | null,
+    updatedAt: string,
+  } | null,
+};
+
+export type OnDeleteUserPreferenceSubscriptionVariables = {
+  filter?: ModelSubscriptionUserPreferenceFilterInput | null,
+};
+
+export type OnDeleteUserPreferenceSubscription = {
+  onDeleteUserPreference?:  {
+    __typename: "UserPreference",
+    createdAt: string,
+    id: string,
+    sortMode?: string | null,
+    theme?: string | null,
+    updatedAt: string,
+    userKey?: string | null,
+  } | null,
+};
+
+export type OnUpdateCategorySubscriptionVariables = {
+  filter?: ModelSubscriptionCategoryFilterInput | null,
+};
+
+export type OnUpdateCategorySubscription = {
+  onUpdateCategory?:  {
+    __typename: "Category",
+    color?: string | null,
+    createdAt: string,
+    id: string,
+    name?: string | null,
+    updatedAt: string,
+  } | null,
+};
+
+export type OnUpdateListItemSubscriptionVariables = {
+  filter?: ModelSubscriptionListItemFilterInput | null,
+};
+
+export type OnUpdateListItemSubscription = {
+  onUpdateListItem?:  {
+    __typename: "ListItem",
+    categoryId?: string | null,
+    createdAt: string,
+    id: string,
+    isCompleted?: boolean | null,
+    name?: string | null,
+    quantity?: number | null,
+    sortOrder?: number | null,
+    updatedAt: string,
+  } | null,
+};
+
+export type OnUpdateUserPreferenceSubscriptionVariables = {
+  filter?: ModelSubscriptionUserPreferenceFilterInput | null,
+};
+
+export type OnUpdateUserPreferenceSubscription = {
+  onUpdateUserPreference?:  {
+    __typename: "UserPreference",
+    createdAt: string,
+    id: string,
+    sortMode?: string | null,
+    theme?: string | null,
+    updatedAt: string,
+    userKey?: string | null,
   } | null,
 };
