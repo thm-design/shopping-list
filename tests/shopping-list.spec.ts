@@ -14,25 +14,45 @@ test.describe('AirList Shopping List App', () => {
     await expect(page.locator('h1:has-text("AirList")')).toBeVisible({ timeout: 10000 });
   });
 
-  test('should toggle dark mode and verify colors change', async ({ page }) => {
+  test('should allow switching between sort modes', async ({ page }) => {
+    const sortGroup = page.getByRole('group', { name: 'Sort mode' });
+    const categorySortButton = sortGroup.getByRole('button', { name: 'By Category' });
+    const customSortButton = sortGroup.getByRole('button', { name: 'Custom', exact: true });
+
+    await expect(categorySortButton).toHaveAttribute('aria-pressed', 'true');
+    await customSortButton.click();
+    await page.waitForTimeout(200);
+    await expect(customSortButton).toHaveAttribute('aria-pressed', 'true');
+    await expect(categorySortButton).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  test('should toggle dark mode, persist preference, and survive reload', async ({ page }) => {
     const themeButton = page.locator('header button').last();
     await expect(themeButton).toBeVisible({ timeout: 5000 });
-    
+
     const html = page.locator('html');
     const isDarkInitial = await html.evaluate(el => el.classList.contains('dark'));
-    
+    expect(isDarkInitial).toBe(false);
+
     await themeButton.click();
     await page.waitForTimeout(300);
-    
-    const isDarkAfter = await html.evaluate(el => el.classList.contains('dark'));
-    expect(isDarkAfter).not.toBe(isDarkInitial);
-    
-    const header = page.locator('header');
-    if (isDarkAfter) {
-      await expect(header).toHaveClass(/bg-zinc-950/);
-    } else {
-      await expect(header).toHaveClass(/bg-white/);
-    }
+
+    await expect(html).toHaveClass(/dark/);
+
+    const storedTheme = await page.evaluate(() => window.localStorage.getItem('airlist:theme'));
+    expect(storedTheme).toBe('dark');
+
+    await page.reload();
+    await page.waitForTimeout(500);
+
+    const isDarkAfterReload = await html.evaluate(el => el.classList.contains('dark'));
+    expect(isDarkAfterReload).toBe(true);
+
+    await themeButton.click();
+    await page.waitForTimeout(300);
+
+    const isDarkAfterToggleBack = await html.evaluate(el => el.classList.contains('dark'));
+    expect(isDarkAfterToggleBack).toBe(false);
   });
 
   test('should show bottom navigation with 3 tabs', async ({ page }) => {
@@ -277,25 +297,40 @@ test.describe('AirList Shopping List App', () => {
     await expect(page.locator('text=List is empty')).toBeVisible();
   });
 
-  test('should enter item selection mode and select multiple items', async ({ page }) => {
-    const itemName = uniqueId();
-    
-    await page.locator('button.fixed.bottom-24').click();
-    await page.waitForTimeout(500);
-    
-    await page.locator('input[placeholder*="Organic Bananas"]').fill(itemName);
-    await page.waitForTimeout(300);
-    await page.locator('button:has-text("Save Item")').click({ force: true });
-    await page.waitForTimeout(1500);
-    
-    const selectBtn = page.locator('header button:has(svg)').nth(0);
-    if (await selectBtn.isVisible()) {
-      await selectBtn.click();
-      await page.waitForTimeout(500);
-      
-      const selectedLabel = page.locator('text=/\\d+ selected/');
-      await expect(selectedLabel).toBeVisible();
+  test('should support select all toggle in selection mode', async ({ page }) => {
+    const itemOne = uniqueId();
+    const itemTwo = uniqueId();
+
+    for (const label of [itemOne, itemTwo]) {
+      await page.locator('button.fixed.bottom-24').click();
+      await page.waitForTimeout(300);
+      await page.locator('input[placeholder*="Organic Bananas"]').fill(label);
+      await page.waitForTimeout(100);
+      await page.locator('button:has-text("Save Item")').click({ force: true });
+      await page.waitForTimeout(600);
     }
+
+    const selectModeButton = page.getByRole('button', { name: 'Enter selection mode' });
+    await selectModeButton.click();
+    await page.waitForTimeout(200);
+
+    const selectAllButton = page.getByRole('button', { name: 'Select All' }).first();
+    const itemRows = page.locator('[draggable="true"]');
+    const itemCount = await itemRows.count();
+    expect(itemCount).toBeGreaterThanOrEqual(2);
+
+    await selectAllButton.click();
+    await page.waitForTimeout(200);
+
+    const selectedLabel = page.locator('text=/\\d+ selected/');
+    await expect(selectedLabel).toBeVisible();
+    await expect(selectedLabel).toHaveText(new RegExp(`${itemCount} selected`));
+    const deselectAllButton = page.getByRole('button', { name: 'Deselect All' }).first();
+    await expect(deselectAllButton).toBeVisible();
+
+    await deselectAllButton.click();
+    await page.waitForTimeout(200);
+    await expect(selectedLabel).toHaveText(/0 selected/);
   });
 
   test('should batch delete selected items', async ({ page }) => {

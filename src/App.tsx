@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, createContext } from 'react';
+import { useState, useEffect, useMemo, useCallback, createContext } from 'react';
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "../amplify/data/resource";
 import { Moon, Sun, Plus, Trash2, Share2, X, Tag, ListTodo, ShoppingBag, Check, Square } from 'lucide-react';
@@ -10,6 +10,15 @@ import { TeaserView } from './components/TeaserView';
 
 export type Category = Schema['Category']['type'];
 export type ListItem = Schema['ListItem']['type'];
+export type UserPreference = Schema['UserPreference']['type'];
+
+type Theme = 'light' | 'dark';
+type SortMode = 'category' | 'custom';
+
+const PREFERENCE_ID_STORAGE_KEY = 'airlist:preferenceId';
+const USER_KEY_STORAGE_KEY = 'airlist:userKey';
+const THEME_STORAGE_KEY = 'airlist:theme';
+const SORT_MODE_STORAGE_KEY = 'airlist:sortMode';
 
 const colorClasses: Record<string, { bg: string; text: string; pillBg: string }> = {
   red: { bg: 'bg-red-500', text: 'text-red-500', pillBg: 'bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400' },
@@ -45,12 +54,30 @@ function AppImpl() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [draggedId, setDraggedId] = useState<string | null>(null);
 
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window === 'undefined') return 'light';
+    const stored = window.localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
+    if (stored === 'dark' || stored === 'light') {
+      return stored;
     }
-    return false;
+    return 'light';
   });
+  const isDark = theme === 'dark';
+  const toggleTheme = useCallback(() => {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+  }, []);
+  const [sortMode, setSortMode] = useState<SortMode>(() => {
+    if (typeof window === 'undefined') return 'category';
+    const stored = window.localStorage.getItem(SORT_MODE_STORAGE_KEY) as SortMode | null;
+    if (stored === 'category' || stored === 'custom') {
+      return stored;
+    }
+    return 'category';
+  });
+  const [preference, setPreference] = useState<UserPreference | null>(null);
+  const handleSortModeChange = useCallback((mode: SortMode) => {
+    setSortMode(mode);
+  }, []);
   const [activeTab, setActiveTab] = useState<'list' | 'categories' | 'teaser'>('list');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
@@ -75,6 +102,111 @@ function AppImpl() {
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<Set<string>>(new Set());
   const [isItemSelectionMode, setIsItemSelectionMode] = useState(false);
+
+  const getOrCreateUserKey = useCallback(() => {
+    if (typeof window === 'undefined') return 'anonymous';
+    let key = window.localStorage.getItem(USER_KEY_STORAGE_KEY);
+    if (!key) {
+      if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+        key = crypto.randomUUID();
+      } else {
+        key = `guest-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      }
+      window.localStorage.setItem(USER_KEY_STORAGE_KEY, key);
+    }
+    return key;
+  }, []);
+
+  useEffect(() => {
+    if (preference) return;
+    let isMounted = true;
+    if (typeof window === 'undefined') return () => { isMounted = false; };
+
+    const initialisePreference = async () => {
+      try {
+        const storedPreferenceId = window.localStorage.getItem(PREFERENCE_ID_STORAGE_KEY);
+        let nextPreference: UserPreference | null = null;
+
+        if (storedPreferenceId) {
+          const { data } = await client.models.UserPreference.get({ id: storedPreferenceId });
+          if (data) {
+            nextPreference = data as UserPreference;
+          }
+        }
+
+        if (!nextPreference) {
+          const { data } = await client.models.UserPreference.create({
+            userKey: getOrCreateUserKey(),
+            theme,
+            sortMode,
+          });
+          if (data) {
+            window.localStorage.setItem(PREFERENCE_ID_STORAGE_KEY, data.id);
+            nextPreference = data as UserPreference;
+          }
+        }
+
+        if (nextPreference && isMounted) {
+          setPreference(nextPreference);
+          if (nextPreference.theme === 'dark' || nextPreference.theme === 'light') {
+            setTheme(nextPreference.theme as Theme);
+          }
+          if (nextPreference.sortMode === 'category' || nextPreference.sortMode === 'custom') {
+            setSortMode(nextPreference.sortMode as SortMode);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load user preference', error);
+      }
+    };
+
+    initialisePreference();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [client, getOrCreateUserKey, theme, sortMode, preference]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(SORT_MODE_STORAGE_KEY, sortMode);
+  }, [sortMode]);
+
+  useEffect(() => {
+    if (!preference) return;
+    const updates: Partial<UserPreference> = {};
+    if (preference.theme !== theme) {
+      updates.theme = theme;
+    }
+    if (preference.sortMode !== sortMode) {
+      updates.sortMode = sortMode;
+    }
+    if (Object.keys(updates).length === 0) return;
+
+    let isCancelled = false;
+
+    const persist = async () => {
+      try {
+        await client.models.UserPreference.update({ id: preference.id, ...updates });
+        if (!isCancelled) {
+          setPreference(prev => (prev ? { ...prev, ...updates } as UserPreference : prev));
+        }
+      } catch (error) {
+        console.error('Failed to persist user preference', error);
+      }
+    };
+
+    persist();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [client, preference, theme, sortMode]);
 
   const isProtectedCategory = (category?: Category | null) => DEFAULT_CATEGORY_MAP.has(normalizeName(category?.name));
 
@@ -204,15 +336,10 @@ function AppImpl() {
       error: (err) => console.error("ListItem delete subscription error:", err)
     });
 
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-
-    const handleChange = (e: MediaQueryListEvent) => setIsDark(e.matches);
-    mediaQuery.addEventListener('change', handleChange);
     fetchData();
 
     return () => {
       isMounted = false;
-      mediaQuery.removeEventListener('change', handleChange);
       categoryCreateSub.unsubscribe();
       categoryUpdateSub.unsubscribe();
       categoryDeleteSub.unsubscribe();
@@ -223,21 +350,65 @@ function AppImpl() {
   }, [client]);
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', isDark);
-  }, [isDark]);
+    if (typeof document === 'undefined') return;
+    const root = document.documentElement;
+    const body = document.body;
+    root.classList.toggle('dark', isDark);
+    body?.classList.toggle('dark', isDark);
+    root.dataset.theme = theme;
+    root.style.colorScheme = theme;
+    body.style.colorScheme = theme;
+  }, [isDark, theme]);
+
+  const categoryOrder = useMemo(() => {
+    const order = new Map<string, number>();
+    categories.forEach((category, index) => {
+      if (category.id) order.set(category.id, index);
+    });
+    return order;
+  }, [categories]);
 
   const filteredItems = useMemo(() => {
     let result = items;
     if (selectedCategory) {
       result = items.filter(i => i.categoryId === selectedCategory);
     }
-    return [...result].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-  }, [items, selectedCategory]);
+
+    return [...result].sort((a, b) => {
+      if (sortMode === 'custom') {
+        return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+      }
+
+      const orderA = a.categoryId ? categoryOrder.get(a.categoryId) ?? Number.MAX_SAFE_INTEGER : Number.MAX_SAFE_INTEGER;
+      const orderB = b.categoryId ? categoryOrder.get(b.categoryId) ?? Number.MAX_SAFE_INTEGER : Number.MAX_SAFE_INTEGER;
+
+      if (orderA !== orderB) return orderA - orderB;
+
+      const nameA = a.name ?? '';
+      const nameB = b.name ?? '';
+      return nameA.localeCompare(nameB, undefined, { sensitivity: 'base' });
+    });
+  }, [items, selectedCategory, sortMode, categoryOrder]);
 
   const toggleItem = async (id: string, currentStatus: boolean) => {
     setItems(prev => prev.map(i => i.id === id ? { ...i, isCompleted: !currentStatus } : i));
     await client.models.ListItem.update({ id, isCompleted: !currentStatus });
   };
+
+  const handleToggleSelectAllItems = useCallback(() => {
+    setSelectedItemIds(prev => {
+      const filteredIds = filteredItems.map(item => item.id);
+      if (filteredIds.length === 0) return prev;
+      const allSelected = filteredIds.every(id => prev.has(id));
+      const next = new Set(prev);
+      if (allSelected) {
+        filteredIds.forEach(id => next.delete(id));
+      } else {
+        filteredIds.forEach(id => next.add(id));
+      }
+      return next;
+    });
+  }, [filteredItems]);
 
   const requestDeleteItems = (ids: string[]) => {
     if (ids.length === 0) return;
@@ -348,6 +519,9 @@ function AppImpl() {
   };
 
   const handleReorder = async (sourceId: string, targetId: string) => {
+    if (sortMode !== 'custom') {
+      handleSortModeChange('custom');
+    }
     const newItems = [...items];
     const sourceIndex = newItems.findIndex(i => i.id === sourceId);
     const targetIndex = newItems.findIndex(i => i.id === targetId);
@@ -431,7 +605,7 @@ function AppImpl() {
   if (loading) return <SplashScreen onComplete={() => setLoading(false)} />;
 
   return (
-    <ThemeContext.Provider value={{ isDark, toggleTheme: () => setIsDark(!isDark) }}>
+    <ThemeContext.Provider value={{ isDark, toggleTheme }}>
       <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans selection:bg-zinc-200 dark:selection:bg-zinc-800 overflow-hidden flex flex-col transition-colors duration-300">
 
         <header className="px-4 sm:px-6 pt-8 sm:pt-10 pb-3 sm:pb-4 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md sticky top-0 z-20 border-b border-zinc-200 dark:border-zinc-900">
@@ -455,7 +629,7 @@ function AppImpl() {
               )}
               <button
                 type="button"
-                onClick={() => setIsDark(!isDark)}
+                onClick={toggleTheme}
                 className="p-1.5 rounded-md bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 active:scale-95 transition-transform"
                 aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
               >
@@ -470,7 +644,35 @@ function AppImpl() {
           {activeTab === 'list' && (
             <div className="flex flex-col h-full animate-in fade-in duration-200">
 
-              <div className="px-4 sm:px-6 py-4 overflow-hidden">
+              <div className="px-4 sm:px-6 pt-4 pb-2 flex flex-col gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Sort Items</span>
+                  <div
+                    role="group"
+                    aria-label="Sort mode"
+                    className="inline-flex rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleSortModeChange('category')}
+                      className={`px-3 py-1.5 text-xs font-semibold transition-colors ${sortMode === 'category' ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900' : 'text-zinc-600 dark:text-zinc-400'}`}
+                      aria-pressed={sortMode === 'category'}
+                    >
+                      By Category
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSortModeChange('custom')}
+                      className={`px-3 py-1.5 text-xs font-semibold transition-colors border-l border-zinc-200 dark:border-zinc-800 ${sortMode === 'custom' ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900' : 'text-zinc-600 dark:text-zinc-400'}`}
+                      aria-pressed={sortMode === 'custom'}
+                    >
+                      Custom
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="px-4 sm:px-6 pb-4 overflow-hidden">
                 <div className="flex gap-2 overflow-x-auto no-scrollbar snap-x px-0">
                 <button
                   type="button"
@@ -514,6 +716,13 @@ function AppImpl() {
                           {selectedItemIds.size} selected
                         </span>
                         <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={handleToggleSelectAllItems}
+                            className="text-xs font-semibold px-3 py-1.5 rounded-md bg-zinc-200 dark:bg-zinc-800"
+                          >
+                            {filteredItems.length > 0 && selectedItemIds.size >= filteredItems.length ? 'Deselect All' : 'Select All'}
+                          </button>
                           <button
                             type="button"
                             onClick={deleteSelectedItems}

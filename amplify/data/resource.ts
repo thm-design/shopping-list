@@ -17,6 +17,14 @@ const schema = a.schema({
       sortOrder: a.integer(),
     })
     .authorization((allow) => [allow.publicApiKey()]),
+
+  UserPreference: a
+    .model({
+      userKey: a.string(),
+      theme: a.string(),
+      sortMode: a.string(),
+    })
+    .authorization((allow) => [allow.publicApiKey()]),
 });
 
 export type Schema = ClientSchema<typeof schema>;
