@@ -621,7 +621,7 @@ function AppImpl() {
                 <button
                   type="button"
                   onClick={() => setIsItemSelectionMode(!isItemSelectionMode)}
-                  className={`p-1.5 rounded-md text-zinc-600 dark:text-zinc-400 active:scale-95 transition-transform ${isItemSelectionMode ? 'bg-zinc-200 dark:bg-zinc-800' : ''}`}
+                  className={`cursor-pointer p-1.5 rounded-md text-zinc-600 dark:text-zinc-400 active:scale-95 transition-transform ${isItemSelectionMode ? 'bg-zinc-200 dark:bg-zinc-800' : ''}`}
                   aria-label={isItemSelectionMode ? 'Exit selection mode' : 'Enter selection mode'}
                 >
                   {isItemSelectionMode ? <Check size={18} /> : <Square size={18} />}
@@ -630,7 +630,7 @@ function AppImpl() {
               <button
                 type="button"
                 onClick={toggleTheme}
-                className="p-1.5 rounded-md bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 active:scale-95 transition-transform"
+                className="cursor-pointer p-1.5 rounded-md bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 active:scale-95 transition-transform"
                 aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
               >
                 {isDark ? <Sun size={18} /> : <Moon size={18} />}
@@ -655,7 +655,7 @@ function AppImpl() {
                     <button
                       type="button"
                       onClick={() => handleSortModeChange('category')}
-                      className={`px-3 py-1.5 text-xs font-semibold transition-colors ${sortMode === 'category' ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900' : 'text-zinc-600 dark:text-zinc-400'}`}
+                      className={`cursor-pointer px-3 py-1.5 text-xs font-semibold transition-colors ${sortMode === 'category' ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900' : 'text-zinc-600 dark:text-zinc-400'}`}
                       aria-pressed={sortMode === 'category'}
                     >
                       By Category
@@ -663,7 +663,7 @@ function AppImpl() {
                     <button
                       type="button"
                       onClick={() => handleSortModeChange('custom')}
-                      className={`px-3 py-1.5 text-xs font-semibold transition-colors border-l border-zinc-200 dark:border-zinc-800 ${sortMode === 'custom' ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900' : 'text-zinc-600 dark:text-zinc-400'}`}
+                      className={`cursor-pointer px-3 py-1.5 text-xs font-semibold transition-colors border-l border-zinc-200 dark:border-zinc-800 ${sortMode === 'custom' ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900' : 'text-zinc-600 dark:text-zinc-400'}`}
                       aria-pressed={sortMode === 'custom'}
                     >
                       Custom
@@ -677,7 +677,7 @@ function AppImpl() {
                 <button
                   type="button"
                   onClick={() => setSelectedCategory(null)}
-                  className={`snap-start whitespace-nowrap px-3 py-1.5 rounded text-xs font-semibold uppercase tracking-wider transition-all ${
+                  className={`cursor-pointer snap-start whitespace-nowrap px-3 py-1.5 rounded text-xs font-semibold uppercase tracking-wider transition-all ${
                     selectedCategory === null
                       ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-sm'
                       : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800'
@@ -690,7 +690,7 @@ function AppImpl() {
                     key={cat.id}
                     type="button"
                     onClick={() => setSelectedCategory(cat.id)}
-                    className={`snap-start whitespace-nowrap px-3 py-1.5 rounded text-xs font-semibold uppercase tracking-wider transition-all ${
+                    className={`cursor-pointer snap-start whitespace-nowrap px-3 py-1.5 rounded text-xs font-semibold uppercase tracking-wider transition-all ${
                       selectedCategory === cat.id
                         ? `${colorClasses[cat.color ?? 'gray'].bg} text-white shadow-sm`
                         : `${colorClasses[cat.color ?? 'gray'].pillBg} border border-transparent`
@@ -719,7 +719,7 @@ function AppImpl() {
                           <button
                             type="button"
                             onClick={handleToggleSelectAllItems}
-                            className="text-xs font-semibold px-3 py-1.5 rounded-md bg-zinc-200 dark:bg-zinc-800"
+                            className="cursor-pointer text-xs font-semibold px-3 py-1.5 rounded-md bg-zinc-200 dark:bg-zinc-800"
                           >
                             {filteredItems.length > 0 && selectedItemIds.size >= filteredItems.length ? 'Deselect All' : 'Select All'}
                           </button>
@@ -727,7 +727,7 @@ function AppImpl() {
                             type="button"
                             onClick={deleteSelectedItems}
                             disabled={selectedItemIds.size === 0}
-                            className="text-xs font-semibold px-3 py-1.5 rounded-md bg-red-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="cursor-pointer text-xs font-semibold px-3 py-1.5 rounded-md bg-red-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Delete
                           </button>
@@ -737,7 +737,7 @@ function AppImpl() {
                               setIsItemSelectionMode(false);
                               setSelectedItemIds(new Set());
                             }}
-                            className="text-xs font-semibold px-3 py-1.5 rounded-md bg-zinc-200 dark:bg-zinc-800"
+                            className="cursor-pointer text-xs font-semibold px-3 py-1.5 rounded-md bg-zinc-200 dark:bg-zinc-800"
                           >
                             Cancel
                           </button>
@@ -783,7 +783,7 @@ function AppImpl() {
                     <button
                       type="button"
                       onClick={deleteSelectedCategories}
-                      className="text-xs font-semibold px-3 py-1.5 rounded-md bg-red-500 text-white flex items-center gap-1"
+                      className="cursor-pointer text-xs font-semibold px-3 py-1.5 rounded-md bg-red-500 text-white flex items-center gap-1"
                     >
                       <Trash2 size={12} /> Delete
                     </button>
@@ -797,14 +797,14 @@ function AppImpl() {
                         setSelectedCategoryIds(new Set(categories.filter(category => !isProtectedCategory(category)).map(category => category.id)));
                       }
                     }}
-                    className="text-xs font-semibold px-3 py-1.5 rounded-md bg-zinc-200 dark:bg-zinc-800"
+                    className="cursor-pointer text-xs font-semibold px-3 py-1.5 rounded-md bg-zinc-200 dark:bg-zinc-800"
                   >
                     {selectedCategoryIds.size > 0 ? 'Deselect All' : 'Select All'}
                   </button>
                   <button
                     type="button"
                     onClick={() => setIsAddCatModalOpen(true)}
-                    className="text-zinc-900 dark:text-white font-semibold text-sm flex items-center gap-1 bg-zinc-200 dark:bg-zinc-800 px-3 py-1.5 rounded-md"
+                    className="cursor-pointer text-zinc-900 dark:text-white font-semibold text-sm flex items-center gap-1 bg-zinc-200 dark:bg-zinc-800 px-3 py-1.5 rounded-md"
                   >
                     <Plus size={14} /> Add
                   </button>
@@ -852,7 +852,7 @@ function AppImpl() {
                           e.stopPropagation();
                           deleteCategory(cat.id);
                         }}
-                        className="p-1.5 text-zinc-400 hover:text-red-500 transition-colors cursor-pointer"
+                        className="cursor-pointer p-1.5 text-zinc-400 hover:text-red-500 transition-colors"
                         aria-label={`Delete ${cat.name} category`}
                       >
                         <Trash2 size={16} />
@@ -872,7 +872,7 @@ function AppImpl() {
           <button
             type="button"
             onClick={() => setIsAddModalOpen(true)}
-            className="fixed bottom-24 right-6 w-14 h-14 bg-gradient-to-br from-zinc-800 to-zinc-950 dark:from-white dark:to-zinc-200 text-white dark:text-zinc-900 rounded-full shadow-xl shadow-zinc-900/20 dark:shadow-white/20 flex items-center justify-center active:scale-90 transition-all z-30 hover:scale-105"
+            className="cursor-pointer fixed bottom-24 right-6 w-14 h-14 bg-gradient-to-br from-zinc-800 to-zinc-950 dark:from-white dark:to-zinc-200 text-white dark:text-zinc-900 rounded-full shadow-xl shadow-zinc-900/20 dark:shadow-white/20 flex items-center justify-center active:scale-90 transition-all z-30 hover:scale-105"
             aria-label="Add new item"
           >
             <Plus size={28} strokeWidth={2.5} />
@@ -884,7 +884,7 @@ function AppImpl() {
             <button
               type="button"
               onClick={() => setActiveTab('list')}
-              className={`flex flex-col items-center gap-1 p-2 w-20 transition-colors ${activeTab === 'list' ? 'text-zinc-900 dark:text-white' : 'text-zinc-400 dark:text-zinc-600 hover:text-zinc-600 dark:hover:text-zinc-400'}`}
+              className={`cursor-pointer flex flex-col items-center gap-1 p-2 w-20 transition-colors ${activeTab === 'list' ? 'text-zinc-900 dark:text-white' : 'text-zinc-400 dark:text-zinc-600 hover:text-zinc-600 dark:hover:text-zinc-400'}`}
             >
               <ListTodo size={20} />
               <span className="text-[10px] font-semibold tracking-wide">List</span>
@@ -892,7 +892,7 @@ function AppImpl() {
             <button
               type="button"
               onClick={() => setActiveTab('categories')}
-              className={`flex flex-col items-center gap-1 p-2 w-20 transition-colors ${activeTab === 'categories' ? 'text-zinc-900 dark:text-white' : 'text-zinc-400 dark:text-zinc-600 hover:text-zinc-600 dark:hover:text-zinc-400'}`}
+              className={`cursor-pointer flex flex-col items-center gap-1 p-2 w-20 transition-colors ${activeTab === 'categories' ? 'text-zinc-900 dark:text-white' : 'text-zinc-400 dark:text-zinc-600 hover:text-zinc-600 dark:hover:text-zinc-400'}`}
             >
               <Tag size={20} />
               <span className="text-[10px] font-semibold tracking-wide">Categories</span>
@@ -900,7 +900,7 @@ function AppImpl() {
             <button
               type="button"
               onClick={() => setActiveTab('teaser')}
-              className={`flex flex-col items-center gap-1 p-2 w-20 transition-colors ${activeTab === 'teaser' ? 'text-zinc-900 dark:text-white' : 'text-zinc-400 dark:text-zinc-600 hover:text-zinc-600 dark:hover:text-zinc-400'}`}
+              className={`cursor-pointer flex flex-col items-center gap-1 p-2 w-20 transition-colors ${activeTab === 'teaser' ? 'text-zinc-900 dark:text-white' : 'text-zinc-400 dark:text-zinc-600 hover:text-zinc-600 dark:hover:text-zinc-400'}`}
             >
               <Share2 size={20} />
               <span className="text-[10px] font-semibold tracking-wide">Pro</span>
@@ -1012,7 +1012,7 @@ function AppImpl() {
                   </div>
                   <div className="w-24">
                     <label className="block text-[10px] font-semibold text-zinc-500 mb-1.5 uppercase tracking-wider">Qty</label>
-                    <div className="flex items-center bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden h-[42px]">
+                    <div className="flex items-center bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden h-10.5]">
                       <button type="button" onClick={() => setEditItemQty(Math.max(1, editItemQty - 1))} className="px-2.5 text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800 h-full">-</button>
                       <span className="flex-1 text-center text-sm font-semibold">{editItemQty}</span>
                       <button type="button" onClick={() => setEditItemQty(editItemQty + 1)} className="px-2.5 text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800 h-full">+</button>
