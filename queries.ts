@@ -13,6 +13,7 @@ export const getCategory = /* GraphQL */ `query GetCategory($id: ID!) {
     color
     createdAt
     id
+    listId
     name
     updatedAt
     __typename
@@ -24,13 +25,18 @@ export const getCategory = /* GraphQL */ `query GetCategory($id: ID!) {
 >;
 export const getListItem = /* GraphQL */ `query GetListItem($id: ID!) {
   getListItem(id: $id) {
+    attachments
     categoryId
     createdAt
     id
     isCompleted
+    listId
     name
+    notes
+    priority
     quantity
     sortOrder
+    subtasks
     updatedAt
     __typename
   }
@@ -38,6 +44,21 @@ export const getListItem = /* GraphQL */ `query GetListItem($id: ID!) {
 ` as GeneratedQuery<
   APITypes.GetListItemQueryVariables,
   APITypes.GetListItemQuery
+>;
+export const getShoppingList = /* GraphQL */ `query GetShoppingList($id: ID!) {
+  getShoppingList(id: $id) {
+    createdAt
+    id
+    name
+    sortOrder
+    updatedAt
+    userKey
+    __typename
+  }
+}
+` as GeneratedQuery<
+  APITypes.GetShoppingListQueryVariables,
+  APITypes.GetShoppingListQuery
 >;
 export const getUserPreference = /* GraphQL */ `query GetUserPreference($id: ID!) {
   getUserPreference(id: $id) {
@@ -64,6 +85,7 @@ export const listCategories = /* GraphQL */ `query ListCategories(
       color
       createdAt
       id
+      listId
       name
       updatedAt
       __typename
@@ -83,13 +105,18 @@ export const listListItems = /* GraphQL */ `query ListListItems(
 ) {
   listListItems(filter: $filter, limit: $limit, nextToken: $nextToken) {
     items {
+      attachments
       categoryId
       createdAt
       id
       isCompleted
+      listId
       name
+      notes
+      priority
       quantity
       sortOrder
+      subtasks
       updatedAt
       __typename
     }
@@ -100,6 +127,29 @@ export const listListItems = /* GraphQL */ `query ListListItems(
 ` as GeneratedQuery<
   APITypes.ListListItemsQueryVariables,
   APITypes.ListListItemsQuery
+>;
+export const listShoppingLists = /* GraphQL */ `query ListShoppingLists(
+  $filter: ModelShoppingListFilterInput
+  $limit: Int
+  $nextToken: String
+) {
+  listShoppingLists(filter: $filter, limit: $limit, nextToken: $nextToken) {
+    items {
+      createdAt
+      id
+      name
+      sortOrder
+      updatedAt
+      userKey
+      __typename
+    }
+    nextToken
+    __typename
+  }
+}
+` as GeneratedQuery<
+  APITypes.ListShoppingListsQueryVariables,
+  APITypes.ListShoppingListsQuery
 >;
 export const listUserPreferences = /* GraphQL */ `query ListUserPreferences(
   $filter: ModelUserPreferenceFilterInput

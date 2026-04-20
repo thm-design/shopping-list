@@ -16,6 +16,7 @@ export const createCategory = /* GraphQL */ `mutation CreateCategory(
     color
     createdAt
     id
+    listId
     name
     updatedAt
     __typename
@@ -30,13 +31,18 @@ export const createListItem = /* GraphQL */ `mutation CreateListItem(
   $input: CreateListItemInput!
 ) {
   createListItem(condition: $condition, input: $input) {
+    attachments
     categoryId
     createdAt
     id
     isCompleted
+    listId
     name
+    notes
+    priority
     quantity
     sortOrder
+    subtasks
     updatedAt
     __typename
   }
@@ -44,6 +50,24 @@ export const createListItem = /* GraphQL */ `mutation CreateListItem(
 ` as GeneratedMutation<
   APITypes.CreateListItemMutationVariables,
   APITypes.CreateListItemMutation
+>;
+export const createShoppingList = /* GraphQL */ `mutation CreateShoppingList(
+  $condition: ModelShoppingListConditionInput
+  $input: CreateShoppingListInput!
+) {
+  createShoppingList(condition: $condition, input: $input) {
+    createdAt
+    id
+    name
+    sortOrder
+    updatedAt
+    userKey
+    __typename
+  }
+}
+` as GeneratedMutation<
+  APITypes.CreateShoppingListMutationVariables,
+  APITypes.CreateShoppingListMutation
 >;
 export const createUserPreference = /* GraphQL */ `mutation CreateUserPreference(
   $condition: ModelUserPreferenceConditionInput
@@ -71,6 +95,7 @@ export const deleteCategory = /* GraphQL */ `mutation DeleteCategory(
     color
     createdAt
     id
+    listId
     name
     updatedAt
     __typename
@@ -85,13 +110,18 @@ export const deleteListItem = /* GraphQL */ `mutation DeleteListItem(
   $input: DeleteListItemInput!
 ) {
   deleteListItem(condition: $condition, input: $input) {
+    attachments
     categoryId
     createdAt
     id
     isCompleted
+    listId
     name
+    notes
+    priority
     quantity
     sortOrder
+    subtasks
     updatedAt
     __typename
   }
@@ -99,6 +129,24 @@ export const deleteListItem = /* GraphQL */ `mutation DeleteListItem(
 ` as GeneratedMutation<
   APITypes.DeleteListItemMutationVariables,
   APITypes.DeleteListItemMutation
+>;
+export const deleteShoppingList = /* GraphQL */ `mutation DeleteShoppingList(
+  $condition: ModelShoppingListConditionInput
+  $input: DeleteShoppingListInput!
+) {
+  deleteShoppingList(condition: $condition, input: $input) {
+    createdAt
+    id
+    name
+    sortOrder
+    updatedAt
+    userKey
+    __typename
+  }
+}
+` as GeneratedMutation<
+  APITypes.DeleteShoppingListMutationVariables,
+  APITypes.DeleteShoppingListMutation
 >;
 export const deleteUserPreference = /* GraphQL */ `mutation DeleteUserPreference(
   $condition: ModelUserPreferenceConditionInput
@@ -126,6 +174,7 @@ export const updateCategory = /* GraphQL */ `mutation UpdateCategory(
     color
     createdAt
     id
+    listId
     name
     updatedAt
     __typename
@@ -140,13 +189,18 @@ export const updateListItem = /* GraphQL */ `mutation UpdateListItem(
   $input: UpdateListItemInput!
 ) {
   updateListItem(condition: $condition, input: $input) {
+    attachments
     categoryId
     createdAt
     id
     isCompleted
+    listId
     name
+    notes
+    priority
     quantity
     sortOrder
+    subtasks
     updatedAt
     __typename
   }
@@ -154,6 +208,24 @@ export const updateListItem = /* GraphQL */ `mutation UpdateListItem(
 ` as GeneratedMutation<
   APITypes.UpdateListItemMutationVariables,
   APITypes.UpdateListItemMutation
+>;
+export const updateShoppingList = /* GraphQL */ `mutation UpdateShoppingList(
+  $condition: ModelShoppingListConditionInput
+  $input: UpdateShoppingListInput!
+) {
+  updateShoppingList(condition: $condition, input: $input) {
+    createdAt
+    id
+    name
+    sortOrder
+    updatedAt
+    userKey
+    __typename
+  }
+}
+` as GeneratedMutation<
+  APITypes.UpdateShoppingListMutationVariables,
+  APITypes.UpdateShoppingListMutation
 >;
 export const updateUserPreference = /* GraphQL */ `mutation UpdateUserPreference(
   $condition: ModelUserPreferenceConditionInput

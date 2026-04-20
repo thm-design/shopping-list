@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>AirList — Design System v1.1</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:        oklch(98.5% 0.004 240);
+      --surface:   oklch(100% 0 0);
+      --surface-2: oklch(96.5% 0.005 240);
+      --border:    oklch(91% 0.008 240);
+      --text:      oklch(14% 0.012 240);
+      --text-2:    oklch(50% 0.012 240);
+      --accent:    oklch(55% 0.20 245);
+      --accent-bg: oklch(95.5% 0.05 245);
+      --accent-fg: oklch(52% 0.20 245);
+      --r-xs:4px; --r-sm:8px; --r-md:12px; --r-lg:16px; --r-xl:20px; --r-full:9999px;
+      --font: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    }
+    body { font-family:var(--font); background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased; }
+
+    /* ── Layout ── */
+    .page { max-width:1040px; margin:0 auto; padding:52px 32px 120px; }
+    .section { margin-bottom:72px; }
+    .section-title { font-size:10px; font-weight:800; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-2); margin-bottom:24px; padding-bottom:12px; border-bottom:2px solid var(--border); }
+    .row   { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-start; }
+    .col   { display:flex; flex-direction:column; gap:12px; }
+    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+    .grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+    @media(max-width:700px) { .grid2,.grid3 { grid-template-columns:1fr; } .page { padding:28px 16px 80px; } }
+
+    /* ── Cards ── */
+    .card  { background:var(--surface); border:1px solid var(--border); border-radius:var(--r-md); padding:20px; }
+    .label { font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-2); margin-bottom:10px; display:block; }
+
+    /* ── Swatches ── */
+    .swatch { display:flex; flex-direction:column; gap:6px; }
+    .sw-dot { height:52px; border-radius:var(--r-sm); }
+    .sw-name { font-size:11px; font-weight:600; color:var(--text-2); }
+    .sw-val  { font-size:10px; color:var(--text-2); opacity:0.6; font-family:monospace; }
+
+    /* ── Type rows ── */
+    .type-row { display:flex; align-items:baseline; gap:20px; padding:10px 0; border-bottom:1px solid var(--border); }
+    .type-row:last-child { border-bottom:none; }
+    .type-meta { width:130px; flex-shrink:0; }
+    .type-name { font-size:11px; font-weight:700; color:var(--text-2); }
+    .type-spec { font-size:10px; color:var(--text-2); opacity:0.55; font-family:monospace; }
+
+    /* ── Space rows ── */
+    .sp-row   { display:flex; align-items:center; gap:14px; padding:5px 0; }
+    .sp-bar   { background:var(--accent); border-radius:3px; height:12px; flex-shrink:0; }
+    .sp-label { font-size:12px; font-weight:600; }
+    .sp-val   { font-size:10px; color:var(--text-2); font-family:monospace; }
+
+    /* ── Dual pane ── */
+    .dual { display:grid; grid-template-columns:1fr 1fr; border-radius:var(--r-lg); overflow:hidden; border:1px solid var(--border); }
+    .dual-light { background:oklch(100% 0 0); padding:20px; }
+    .dual-dark  { background:oklch(13% 0.008 240); padding:20px; }
+    .pane-label { font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:14px; }
+    .dual-light .pane-label { color:oklch(60% 0.01 240); }
+    .dual-dark  .pane-label { color:oklch(52% 0.01 240); }
+    @media(max-width:700px) { .dual { grid-template-columns:1fr; } }
+
+    /* ── Component demos ── */
+    .btn { display:inline-flex; align-items:center; gap:6px; border:none; cursor:pointer; font-family:var(--font); font-weight:600; font-size:14px; border-radius:var(--r-sm); padding:9px 18px; transition:opacity 0.15s; }
+    .btn-primary   { background:var(--accent); color:white; }
+    .btn-secondary { background:var(--surface-2); color:var(--text); border:1px solid var(--border); }
+    .btn-ghost     { background:transparent; color:var(--text-2); border:1px solid var(--border); }
+    .btn-danger    { background:oklch(52% 0.22 25); color:white; }
+    .btn-icon      { background:var(--surface-2); color:var(--text-2); width:36px; height:36px; padding:0; justify-content:center; border-radius:var(--r-sm); }
+    .btn-sm        { padding:5px 12px; font-size:12px; }
+    .btn-pill      { border-radius:var(--r-full); }
+
+    .inp { width:100%; padding:11px 14px; background:var(--surface-2); border:1px solid var(--border); border-radius:var(--r-sm); font-size:14px; color:var(--text); font-family:var(--font); outline:none; transition:border-color 0.15s; }
+    .inp:focus { border-color:var(--accent); }
+    .inp-focused { border-color:var(--accent) !important; }
+
+    .badge { display:inline-flex; align-items:center; padding:2px 8px; border-radius:var(--r-full); font-size:10px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; }
+    .badge-green  { background:oklch(96% 0.04 145);  color:oklch(34% 0.14 145); }
+    .badge-red    { background:oklch(97% 0.03 25);   color:oklch(36% 0.18 25);  }
+    .badge-blue   { background:oklch(96% 0.04 245);  color:oklch(38% 0.16 245); }
+    .badge-orange { background:oklch(97% 0.04 65);   color:oklch(42% 0.16 65);  }
+    .badge-purple { background:oklch(96% 0.04 300);  color:oklch(38% 0.18 300); }
+    .badge-pink   { background:oklch(97% 0.03 350);  color:oklch(42% 0.18 350); }
+    .badge-gray   { background:oklch(95% 0.005 240); color:oklch(40% 0.01 240); }
+
+    /* Page header */
+    .page-hdr { display:flex; align-items:flex-end; justify-content:space-between; padding-bottom:28px; margin-bottom:60px; border-bottom:2px solid var(--border); }
+    .brand-icon { width:48px; height:48px; background:var(--text); border-radius:var(--r-md); display:flex; align-items:center; justify-content:center; }
+    .brand-name { font-size:30px; font-weight:800; letter-spacing:-0.8px; }
+    .brand-sub  { font-size:13px; color:var(--text-2); margin-top:3px; }
+    .ds-meta    { font-size:12px; color:var(--text-2); text-align:right; line-height:1.7; }
+
+    /* Radius demo */
+    .r-box { width:40px; height:40px; background:var(--surface-2); border:1.5px solid var(--border); flex-shrink:0; }
+
+    /* List item */
+    .li { display:flex; align-items:center; gap:8px; padding:11px 10px 11px 8px; background:var(--surface); border:1px solid var(--border); border-radius:var(--r-sm); margin-bottom:4px; min-height:46px; }
+    .li-priority { background:oklch(99% 0.015 25); border-color:oklch(52% 0.22 25 / 0.28); }
+    .li-done     { opacity:0.52; }
+    .grip { color:oklch(80% 0.005 240); display:flex; }
+    .check { width:20px; height:20px; border-radius:50%; border:1.5px solid var(--border); flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+    .check-done { background:var(--accent); border-color:var(--accent); }
+    .li-name  { font-size:14px; font-weight:500; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .li-stk   { text-decoration:line-through; color:var(--text-2); }
+    .sub-ct   { font-size:10px; font-weight:600; color:var(--text-2); background:var(--surface-2); padding:1px 5px; border-radius:var(--r-xs); flex-shrink:0; }
+    .dots-btn { width:28px; height:28px; background:transparent; border:none; cursor:pointer; color:var(--text-2); display:flex; align-items:center; justify-content:center; font-size:17px; border-radius:var(--r-xs); flex-shrink:0; }
+
+    /* Progress */
+    .prog-track { height:3px; background:var(--surface-2); border-radius:var(--r-full); overflow:hidden; }
+    .prog-fill  { height:100%; border-radius:var(--r-full); }
+
+    /* Dropdown */
+    .dd { background:var(--surface); border:1px solid var(--border); border-radius:var(--r-md); padding:4px; width:180px; box-shadow:0 8px 24px oklch(0% 0 0 / 0.12); }
+    .dd-item { display:flex; align-items:center; gap:9px; padding:8px 10px; font-size:13px; font-weight:500; border-radius:var(--r-sm); cursor:pointer; }
+    .dd-item:hover { background:var(--surface-2); }
+    .dd-sep  { height:1px; background:var(--border); margin:3px 4px; }
+
+    /* Detail panel excerpt */
+    .detail-panel { background:var(--surface); border-radius:var(--r-xl) var(--r-xl) 0 0; border:1px solid var(--border); overflow:hidden; }
+    .detail-hdr { display:flex; align-items:center; gap:8px; padding:12px 16px; border-bottom:1px solid var(--border); }
+    .detail-body { padding:18px 20px; }
+    .detail-title { font-size:22px; font-weight:700; letter-spacing:-0.4px; margin-bottom:14px; }
+    .chip { display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:var(--r-full); font-size:13px; font-weight:600; }
+
+    /* Input bar */
+    .input-bar { display:flex; align-items:center; gap:8px; padding:10px 12px; background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); box-shadow:0 4px 20px oklch(0% 0 0 / 0.10); }
+    .plus-btn  { width:32px; height:32px; border-radius:var(--r-sm); background:var(--accent); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .send-btn  { width:32px; height:32px; border-radius:var(--r-sm); background:var(--accent); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+
+    /* Subtasks */
+    .sub-row { display:flex; align-items:center; gap:10px; padding:7px 0; border-bottom:1px solid var(--border); }
+    .sub-circle { width:18px; height:18px; border-radius:50%; border:1.5px solid var(--border); flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+    .sub-done-c { background:var(--accent); border-color:var(--accent); }
+
+    /* My Lists panel */
+    .lists-panel { background:var(--surface); border-radius:var(--r-md); border:1px solid var(--border); overflow:hidden; max-width:288px; }
+    .list-row { display:flex; align-items:center; gap:12px; padding:10px 16px; cursor:pointer; }
+    .list-row-active { background:var(--accent-bg); }
+    .list-icon { width:32px; height:32px; border-radius:var(--r-sm); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="page-hdr">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div class="brand-icon">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">AirList</div>
+        <div class="brand-sub">Design System · v1.1 · April 2026</div>
+      </div>
+    </div>
+    <div class="ds-meta">system-ui font stack<br>Zinc neutrals + Blue accent (hue 245)<br>oklch color space throughout</div>
+  </div>
+
+  <!-- ── COLOR TOKENS ──────────────────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-title">Color Tokens</div>
+
+    <div style="margin-bottom:32px;">
+      <span class="label">Neutral scale — light mode</span>
+      <div class="row">
+        <div class="swatch"><div class="sw-dot" style="background:oklch(98.5% 0.004 240);border:1px solid var(--border);"></div><div class="sw-name">--bg</div><div class="sw-val">oklch(98.5% 0.004 240)</div></div>
+        <div class="swatch"><div class="sw-dot" style="background:oklch(100% 0 0);border:1px solid var(--border);"></div><div class="sw-name">--surface</div><div class="sw-val">oklch(100% 0 0)</div></div>
+        <div class="swatch"><div class="sw-dot" style="background:oklch(96.5% 0.005 240);border:1px solid var(--border);"></div><div class="sw-name">--surface-2</div><div class="sw-val">oklch(96.5% 0.005 240)</div></div>
+        <div class="swatch"><div class="sw-dot" style="background:oklch(91% 0.008 240);"></div><div class="sw-name">--border</div><div class="sw-val">oklch(91% 0.008 240)</div></div>
+        <div class="swatch"><div class="sw-dot" style="background:oklch(50% 0.012 240);"></div><div class="sw-name">--text-2</div><div class="sw-val">oklch(50% 0.012 240)</div></div>
+        <div class="swatch"><div class="sw-dot" style="background:oklch(14% 0.012 240);"></div><div class="sw-name">--text</div><div class="sw-val">oklch(14% 0.012 240)</div></div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:32px;">
+      <span class="label">Neutral scale — dark mode</span>
+      <div class="row">
+        <div class="swatch"><div class="sw-dot" style="background:oklch(9% 0.006 240);"></div><div class="sw-name">--bg</div><div class="sw-val">oklch(9% 0.006 240)</div></div>
+        <div class="swatch"><div class="sw-dot" style="background:oklch(13% 0.008 240);"></div><div class="sw-name">--surface</div><div class="sw-val">oklch(13% 0.008 240)</div></div>
+        <div class="swatch"><div class="sw-dot" style="background:oklch(18% 0.008 240);"></div><div class="sw-name">--surface-2</div><div class="sw-val">oklch(18% 0.008 240)</div></div>
+        <div class="swatch"><div class="sw-dot" style="background:oklch(24% 0.009 240);"></div><div class="sw-name">--border</div><div class="sw-val">oklch(24% 0.009 240)</div></div>
+        <div class="swatch"><div class="sw-dot" style="background:oklch(62% 0.012 240);"></div><div class="sw-name">--text-2</div><div class="sw-val">oklch(62% 0.012 240)</div></div>
+        <div class="swatch"><div class="sw-dot" style="background:oklch(96% 0.004 240);border:1px solid #333;"></div><div class="sw-name">--text</div><div class="sw-val">oklch(96% 0.004 240)</div></div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:32px;">
+      <span class="label">Blue accent (hue 245) — shared chroma ~0.20</span>
+      <div class="row">
+        <div class="swatch"><div class="sw-dot" style="background:oklch(95.5% 0.05 245);border:1px solid var(--border);"></div><div class="sw-name">--accent-bg</div><div class="sw-val">oklch(95.5% 0.05 245)</div></div>
+        <div class="swatch"><div class="sw-dot" style="background:oklch(55% 0.20 245);"></div><div class="sw-name">--accent</div><div class="sw-val">oklch(55% 0.20 245)</div></div>
+        <div class="swatch"><div class="sw-dot" style="background:oklch(42% 0.18 245);"></div><div class="sw-name">accent/hover</div><div class="sw-val">oklch(42% 0.18 245)</div></div>
+        <div class="swatch"><div class="sw-dot" style="background:oklch(19% 0.07 245);"></div><div class="sw-name">dark --accent-bg</div><div class="sw-val">oklch(19% 0.07 245)</div></div>
+        <div class="swatch"><div class="sw-dot" style="background:oklch(65% 0.18 245);"></div><div class="sw-name">dark --accent</div><div class="sw-val">oklch(65% 0.18 245)</div></div>
+      </div>
+    </div>
+
+    <div>
+      <span class="label">Category palette — all L≈55%, C≈0.19, varied hue</span>
+      <div class="row">
+        <div class="swatch"><div class="sw-dot" style="background:oklch(52% 0.17 145);"></div><div class="sw-name">Produce</div><div class="sw-val">hue 145</div></div>
+        <div class="swatch"><div class="sw-dot" style="background:oklch(52% 0.22 25);"></div><div class="sw-name">Meat / Danger</div><div class="sw-val">hue 25</div></div>
+        <div class="swatch"><div class="sw-dot" style="background:oklch(55% 0.20 245);"></div><div class="sw-name">Dairy / Blue</div><div class="sw-val">hue 245</div></div>
+        <div class="swatch"><div class="sw-dot" style="background:oklch(63% 0.20 65);"></div><div class="sw-name">Pantry</div><div class="sw-val">hue 65</div></div>
+        <div class="swatch"><div class="sw-dot" style="background:oklch(76% 0.17 90);"></div><div class="sw-name">Yellow</div><div class="sw-val">hue 90</div></div>
+        <div class="swatch"><div class="sw-dot" style="background:oklch(55% 0.22 300);"></div><div class="sw-name">Purple</div><div class="sw-val">hue 300</div></div>
+        <div class="swatch"><div class="sw-dot" style="background:oklch(60% 0.22 350);"></div><div class="sw-name">Pink</div><div class="sw-val">hue 350</div></div>
+        <div class="swatch"><div class="sw-dot" style="background:oklch(52% 0.01 240);"></div><div class="sw-name">General</div><div class="sw-val">neutral</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── LIGHT / DARK ──────────────────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-title">Light & Dark — List Items</div>
+    <div class="dual">
+      <div class="dual-light">
+        <div class="pane-label">Light</div>
+        <!-- Normal item -->
+        <div class="li">
+          <div class="grip"><svg width="14" height="20" viewBox="0 0 14 20" fill="oklch(80% 0.005 240)"><circle cx="4.5" cy="5" r="1.4"/><circle cx="9.5" cy="5" r="1.4"/><circle cx="4.5" cy="10" r="1.4"/><circle cx="9.5" cy="10" r="1.4"/><circle cx="4.5" cy="15" r="1.4"/><circle cx="9.5" cy="15" r="1.4"/></svg></div>
+          <div class="check"></div>
+          <span class="li-name">Organic Bananas</span>
+          <span class="badge badge-green">Produce</span>
+          <div class="dots-btn">···</div>
+        </div>
+        <!-- Priority item -->
+        <div class="li li-priority">
+          <div class="grip"><svg width="14" height="20" viewBox="0 0 14 20" fill="oklch(80% 0.005 240)"><circle cx="4.5" cy="5" r="1.4"/><circle cx="9.5" cy="5" r="1.4"/><circle cx="4.5" cy="10" r="1.4"/><circle cx="9.5" cy="10" r="1.4"/><circle cx="4.5" cy="15" r="1.4"/><circle cx="9.5" cy="15" r="1.4"/></svg></div>
+          <div class="check"></div>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="oklch(52% 0.22 25)" style="flex-shrink:0"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/></svg>
+          <span class="li-name">Free Range Eggs</span>
+          <span class="sub-ct">1/2</span>
+          <span class="badge badge-blue">Dairy</span>
+          <div class="dots-btn">···</div>
+        </div>
+        <!-- Done item -->
+        <div class="li li-done">
+          <div class="grip"><svg width="14" height="20" viewBox="0 0 14 20" fill="oklch(80% 0.005 240)"><circle cx="4.5" cy="5" r="1.4"/><circle cx="9.5" cy="5" r="1.4"/><circle cx="4.5" cy="10" r="1.4"/><circle cx="9.5" cy="10" r="1.4"/><circle cx="4.5" cy="15" r="1.4"/><circle cx="9.5" cy="15" r="1.4"/></svg></div>
+          <div class="check check-done"><svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M1 4l3 3 5-6"/></svg></div>
+          <span class="li-name li-stk">Sourdough Bread</span>
+          <span class="badge badge-gray">General</span>
+          <div class="dots-btn">···</div>
+        </div>
+      </div>
+      <div class="dual-dark">
+        <div class="pane-label">Dark</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:11px 10px 11px 8px;background:oklch(13% 0.008 240);border:1px solid oklch(24% 0.009 240);border-radius:8px;margin-bottom:4px;min-height:46px;">
+          <div style="color:oklch(30% 0.008 240);display:flex;"><svg width="14" height="20" viewBox="0 0 14 20" fill="currentColor"><circle cx="4.5" cy="5" r="1.4"/><circle cx="9.5" cy="5" r="1.4"/><circle cx="4.5" cy="10" r="1.4"/><circle cx="9.5" cy="10" r="1.4"/><circle cx="4.5" cy="15" r="1.4"/><circle cx="9.5" cy="15" r="1.4"/></svg></div>
+          <div style="width:20px;height:20px;border-radius:50%;border:1.5px solid oklch(24% 0.009 240);flex-shrink:0;"></div>
+          <span style="font-size:14px;font-weight:500;color:oklch(96% 0.004 240);flex:1;">Organic Bananas</span>
+          <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:oklch(19% 0.07 145);color:oklch(72% 0.14 145);text-transform:uppercase;letter-spacing:0.04em;">Produce</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:11px 10px 11px 8px;background:oklch(17% 0.06 25);border:1px solid oklch(52% 0.22 25 / 0.28);border-radius:8px;margin-bottom:4px;min-height:46px;">
+          <div style="color:oklch(30% 0.008 240);display:flex;"><svg width="14" height="20" viewBox="0 0 14 20" fill="currentColor"><circle cx="4.5" cy="5" r="1.4"/><circle cx="9.5" cy="5" r="1.4"/><circle cx="4.5" cy="10" r="1.4"/><circle cx="9.5" cy="10" r="1.4"/><circle cx="4.5" cy="15" r="1.4"/><circle cx="9.5" cy="15" r="1.4"/></svg></div>
+          <div style="width:20px;height:20px;border-radius:50%;border:1.5px solid oklch(24% 0.009 240);flex-shrink:0;"></div>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="oklch(52% 0.22 25)" style="flex-shrink:0"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/></svg>
+          <span style="font-size:14px;font-weight:500;color:oklch(96% 0.004 240);flex:1;">Free Range Eggs</span>
+          <span style="font-size:10px;font-weight:600;color:oklch(62% 0.012 240);background:oklch(18% 0.008 240);padding:1px 5px;border-radius:4px;">1/2</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:11px 10px 11px 8px;background:oklch(13% 0.008 240);border:1px solid oklch(24% 0.009 240);border-radius:8px;min-height:46px;opacity:0.52;">
+          <div style="color:oklch(30% 0.008 240);display:flex;"><svg width="14" height="20" viewBox="0 0 14 20" fill="currentColor"><circle cx="4.5" cy="5" r="1.4"/><circle cx="9.5" cy="5" r="1.4"/><circle cx="4.5" cy="10" r="1.4"/><circle cx="9.5" cy="10" r="1.4"/><circle cx="4.5" cy="15" r="1.4"/><circle cx="9.5" cy="15" r="1.4"/></svg></div>
+          <div style="width:20px;height:20px;border-radius:50%;background:oklch(65% 0.18 245);border:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M1 4l3 3 5-6"/></svg></div>
+          <span style="font-size:14px;font-weight:500;color:oklch(62% 0.012 240);text-decoration:line-through;flex:1;">Sourdough Bread</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TYPOGRAPHY ────────────────────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-title">Typography</div>
+    <div class="card">
+      <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;">Font stack</div>
+      <code style="font-size:12px;background:var(--surface-2);padding:8px 12px;border-radius:var(--r-sm);display:block;margin-bottom:24px;line-height:1.6;color:var(--text-2);">system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif</code>
+      <div class="type-row"><div class="type-meta"><div class="type-name">Display</div><div class="type-spec">30px/800/−0.8px</div></div><div style="font-size:30px;font-weight:800;letter-spacing:-0.8px;">AirList</div></div>
+      <div class="type-row"><div class="type-meta"><div class="type-name">Heading 1</div><div class="type-spec">22px/700/−0.4px</div></div><div style="font-size:22px;font-weight:700;letter-spacing:-0.4px;">My Lists</div></div>
+      <div class="type-row"><div class="type-meta"><div class="type-name">Heading 2</div><div class="type-spec">18px/700/−0.3px</div></div><div style="font-size:18px;font-weight:700;letter-spacing:-0.3px;">Categories</div></div>
+      <div class="type-row"><div class="type-meta"><div class="type-name">Subtitle</div><div class="type-spec">16px/700/−0.3px</div></div><div style="font-size:16px;font-weight:700;letter-spacing:-0.3px;">Groceries</div></div>
+      <div class="type-row"><div class="type-meta"><div class="type-name">Body</div><div class="type-spec">14px/500</div></div><div style="font-size:14px;font-weight:500;">Organic Bananas</div></div>
+      <div class="type-row"><div class="type-meta"><div class="type-name">Small</div><div class="type-spec">13px/400</div></div><div style="font-size:13px;">5 items remaining</div></div>
+      <div class="type-row"><div class="type-meta"><div class="type-name">Caption</div><div class="type-spec">11px/600</div></div><div style="font-size:11px;font-weight:600;color:var(--text-2);">3 of 10 done</div></div>
+      <div class="type-row"><div class="type-meta"><div class="type-name">Label/Tag</div><div class="type-spec">10px/700/UC/0.07em</div></div><div style="font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-2);">Category</div></div>
+    </div>
+  </div>
+
+  <!-- ── SPACING + RADIUS ──────────────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-title">Spacing & Radius</div>
+    <div class="grid2">
+      <div>
+        <span class="label">Spacing (4px base unit)</span>
+        <div class="card">
+          <div class="sp-row"><div class="sp-bar" style="width:4px;"></div><div><div class="sp-label">1 · 4px</div><div class="sp-val">micro gap</div></div></div>
+          <div class="sp-row"><div class="sp-bar" style="width:8px;"></div><div><div class="sp-label">2 · 8px</div><div class="sp-val">icon gap, tight gap</div></div></div>
+          <div class="sp-row"><div class="sp-bar" style="width:10px;"></div><div><div class="sp-label">2.5 · 10px</div><div class="sp-val">item gap</div></div></div>
+          <div class="sp-row"><div class="sp-bar" style="width:12px;"></div><div><div class="sp-label">3 · 12px</div><div class="sp-val">input padding, drawer padding</div></div></div>
+          <div class="sp-row"><div class="sp-bar" style="width:14px;"></div><div><div class="sp-label">3.5 · 14px</div><div class="sp-val">section gap</div></div></div>
+          <div class="sp-row"><div class="sp-bar" style="width:16px;"></div><div><div class="sp-label">4 · 16px</div><div class="sp-val">page gutter</div></div></div>
+          <div class="sp-row"><div class="sp-bar" style="width:20px;"></div><div><div class="sp-label">5 · 20px</div><div class="sp-val">panel padding</div></div></div>
+          <div class="sp-row"><div class="sp-bar" style="width:24px;"></div><div><div class="sp-label">6 · 24px</div><div class="sp-val">modal / detail body padding</div></div></div>
+        </div>
+      </div>
+      <div>
+        <span class="label">Border radius</span>
+        <div class="card">
+          <div class="sp-row"><div class="r-box" style="border-radius:4px;"></div><div><div class="sp-label">--r-xs · 4px</div><div class="sp-val">badge, tag, checkbox</div></div></div>
+          <div class="sp-row"><div class="r-box" style="border-radius:8px;"></div><div><div class="sp-label">--r-sm · 8px</div><div class="sp-val">card, button, input, item</div></div></div>
+          <div class="sp-row"><div class="r-box" style="border-radius:12px;"></div><div><div class="sp-label">--r-md · 12px</div><div class="sp-val">dropdown, demo card</div></div></div>
+          <div class="sp-row"><div class="r-box" style="border-radius:16px;"></div><div><div class="sp-label">--r-lg · 16px</div><div class="sp-val">floating input bar</div></div></div>
+          <div class="sp-row"><div class="r-box" style="border-radius:20px;"></div><div><div class="sp-label">--r-xl · 20px</div><div class="sp-val">bottom sheet, modal</div></div></div>
+          <div class="sp-row"><div class="r-box" style="border-radius:999px;"></div><div><div class="sp-label">--r-full</div><div class="sp-val">pill, chip, filter tag</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BUTTONS ───────────────────────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-title">Buttons</div>
+    <div class="card">
+      <div class="row" style="align-items:center;">
+        <button class="btn btn-primary">Add Item</button>
+        <button class="btn btn-secondary">Cancel</button>
+        <button class="btn btn-ghost">Sort</button>
+        <button class="btn btn-danger">Delete</button>
+        <button class="btn btn-primary btn-sm">Save</button>
+        <button class="btn btn-secondary btn-sm btn-pill">Mark done</button>
+        <button class="btn btn-icon">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 2v12M2 8h12"/></svg>
+        </button>
+        <button class="btn btn-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── INPUTS ────────────────────────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-title">Inputs</div>
+    <div class="card" style="max-width:440px;display:flex;flex-direction:column;gap:16px;">
+      <div>
+        <label class="label">Item name</label>
+        <input class="inp" placeholder="e.g. Organic Bananas"/>
+      </div>
+      <div>
+        <label class="label">Notes</label>
+        <textarea class="inp" rows="3" placeholder="Insert your notes here…" style="resize:vertical;line-height:1.6;"></textarea>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <div style="flex:1;">
+          <label class="label">Category</label>
+          <select class="inp" style="appearance:none;"><option>Produce</option><option>Dairy</option><option>Meat</option></select>
+        </div>
+        <div style="width:100px;">
+          <label class="label">Qty</label>
+          <div style="display:flex;align-items:center;height:42px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden;">
+            <button style="padding:0 12px;height:100%;background:transparent;border:none;cursor:pointer;color:var(--text-2);font-size:18px;">−</button>
+            <span style="flex:1;text-align:center;font-weight:700;font-size:14px;">2</span>
+            <button style="padding:0 12px;height:100%;background:transparent;border:none;cursor:pointer;color:var(--text-2);font-size:18px;">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BADGES & CHIPS ───────────────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-title">Badges & Category Chips</div>
+    <div class="card">
+      <span class="label">Category pills (inactive)</span>
+      <div class="row" style="margin-bottom:16px;">
+        <span class="badge badge-green">Produce</span>
+        <span class="badge badge-red">Meat</span>
+        <span class="badge badge-blue">Dairy</span>
+        <span class="badge badge-orange">Pantry</span>
+        <span class="badge badge-purple">Frozen</span>
+        <span class="badge badge-pink">Bakery</span>
+        <span class="badge badge-gray">General</span>
+      </div>
+      <span class="label">Filter chips</span>
+      <div class="row" style="margin-bottom:16px;">
+        <button style="padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600;background:var(--accent);color:white;border:none;cursor:pointer;">All ·10</button>
+        <button style="padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600;background:oklch(52% 0.17 145);color:white;border:none;cursor:pointer;">Produce ·4</button>
+        <button style="padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600;background:oklch(96% 0.04 145);color:oklch(34% 0.14 145);border:none;cursor:pointer;">Dairy ·3</button>
+        <button style="padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600;background:var(--surface-2);color:var(--text-2);border:none;cursor:pointer;">Meat ·2</button>
+      </div>
+      <span class="label">Status / meta badges</span>
+      <div class="row">
+        <span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:var(--r-xs);background:var(--surface-2);color:var(--text-2);text-transform:uppercase;letter-spacing:0.06em;">Default</span>
+        <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--surface-2);color:var(--text-2);text-transform:uppercase;letter-spacing:0.06em;">Soon</span>
+        <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;background:oklch(97% 0.03 25);color:oklch(36% 0.18 25);display:inline-flex;align-items:center;gap:4px;">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="oklch(52% 0.22 25)" stroke="none"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/></svg>Priority
+        </span>
+        <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;background:oklch(96% 0.04 145);color:oklch(34% 0.14 145);">✓ Completed</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PROGRESS BAR ──────────────────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-title">Progress Bar</div>
+    <div class="card" style="display:flex;flex-direction:column;gap:18px;max-width:440px;">
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span style="font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-2);">Progress</span><span style="font-size:11px;font-weight:700;color:var(--text-2);">3 / 10</span></div>
+        <div class="prog-track"><div class="prog-fill" style="width:30%;background:var(--accent);"></div></div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span style="font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-2);">Progress</span><span style="font-size:11px;font-weight:700;color:oklch(52% 0.17 145);">10 / 10 ✓</span></div>
+        <div class="prog-track"><div class="prog-fill" style="width:100%;background:oklch(52% 0.17 145);"></div></div>
+      </div>
+      <div>
+        <div style="margin-bottom:6px;font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-2);">Subtasks 2 / 4</div>
+        <div class="prog-track"><div class="prog-fill" style="width:50%;background:var(--accent);"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DROPDOWN MENU ─────────────────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-title">Dropdown Menu (⋯)</div>
+    <div class="row">
+      <div class="dd">
+        <div class="dd-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>Flag as priority</div>
+        <div class="dd-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>View details</div>
+        <div class="dd-sep"></div>
+        <div class="dd-item" style="color:oklch(52% 0.22 25);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>Delete</div>
+      </div>
+      <!-- Active priority state -->
+      <div class="dd">
+        <div class="dd-item" style="color:oklch(52% 0.22 25);"><svg width="14" height="14" viewBox="0 0 24 24" fill="oklch(52% 0.22 25)" stroke="none"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/></svg>Remove priority</div>
+        <div class="dd-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>View details</div>
+        <div class="dd-sep"></div>
+        <div class="dd-item" style="color:oklch(52% 0.22 25);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>Delete</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ITEM DETAIL PANEL ─────────────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-title">Item Detail Panel</div>
+    <div class="detail-panel" style="max-width:480px;">
+      <!-- Handle -->
+      <div style="display:flex;justify-content:center;padding:10px 0 0;"><div style="width:36px;height:4px;border-radius:2px;background:var(--border);"></div></div>
+      <!-- Header -->
+      <div class="detail-hdr">
+        <span style="font-size:12px;color:var(--text-2);flex:1;">My Lists › <strong style="color:var(--text);">Groceries</strong></span>
+        <button style="padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;background:var(--accent-bg);color:var(--accent-fg);border:none;cursor:pointer;">Mark done</button>
+        <button style="width:30px;height:30px;border-radius:var(--r-sm);background:transparent;border:none;cursor:pointer;color:oklch(52% 0.22 25);display:flex;align-items:center;justify-content:center;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+        </button>
+        <button style="width:30px;height:30px;border-radius:var(--r-sm);background:var(--surface-2);border:none;cursor:pointer;color:var(--text-2);display:flex;align-items:center;justify-content:center;">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 2l9 9M11 2L2 11"/></svg>
+        </button>
+      </div>
+      <div class="detail-body">
+        <!-- Title -->
+        <div class="detail-title">Free Range Eggs</div>
+        <!-- Chips -->
+        <div style="display:flex;gap:8px;margin-bottom:22px;flex-wrap:wrap;">
+          <span class="chip" style="background:oklch(96% 0.04 245);color:oklch(38% 0.16 245);">
+            <div style="width:8px;height:8px;border-radius:50%;background:oklch(55% 0.20 245);"></div>Dairy
+          </span>
+          <span class="chip" style="background:oklch(97% 0.03 25);color:oklch(36% 0.18 25);">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="oklch(52% 0.22 25)" stroke="none"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/></svg>Priority
+          </span>
+          <span class="chip" style="background:var(--surface-2);color:var(--text-2);">×12 qty</span>
+        </div>
+        <!-- Notes -->
+        <div style="margin-bottom:22px;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:var(--text-2);margin-bottom:8px;">Notes</div>
+          <div style="padding:10px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);font-size:14px;color:var(--text-2);font-style:italic;line-height:1.6;">Insert your notes here…</div>
+        </div>
+        <!-- Subtasks -->
+        <div style="margin-bottom:22px;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:var(--text-2);margin-bottom:8px;">Subtasks 1/3</div>
+          <div style="height:3px;background:var(--surface-2);border-radius:999px;margin-bottom:8px;overflow:hidden;"><div style="height:100%;width:33%;background:var(--accent);border-radius:999px;"></div></div>
+          <div style="border-top:1px solid var(--border);">
+            <div class="sub-row">
+              <div class="sub-circle sub-done-c"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><path d="M1 3.5l2.5 2.5L8 1"/></svg></div>
+              <span style="font-size:14px;color:var(--text-2);text-decoration:line-through;flex:1;">Check use-by date</span>
+            </div>
+            <div class="sub-row">
+              <div class="sub-circle"></div>
+              <span style="font-size:14px;flex:1;">Free-range only</span>
+            </div>
+            <div class="sub-row" style="border-bottom:none;">
+              <div class="sub-circle"></div>
+              <span style="font-size:14px;color:var(--text-2);flex:1;">Get extra if on sale</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+              <div class="sub-circle"></div>
+              <span style="font-size:14px;color:var(--text-2);font-style:italic;">Add a new subtask…</span>
+            </div>
+          </div>
+        </div>
+        <!-- Attachments -->
+        <div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:var(--text-2);margin-bottom:8px;">Attachments</div>
+          <div style="padding:20px;text-align:center;border:1.5px dashed var(--border);border-radius:var(--r-md);">
+            <p style="font-size:13px;color:var(--text-2);">Click to add · drop files here</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── FLOATING INPUT BAR ────────────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-title">Floating Bottom Input Bar</div>
+    <div style="max-width:420px;display:flex;flex-direction:column;gap:10px;">
+      <!-- Expansion panel -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px 14px;box-shadow:0 8px 32px oklch(0% 0 0 / 0.08);">
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-2);margin-bottom:7px;">Add to list</div>
+        <div style="display:flex;flex-direction:column;gap:2px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--r-sm);background:var(--accent-bg);">
+            <div style="width:16px;height:16px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="9" height="7" viewBox="0 0 9 7" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><path d="M1 3.5l2.5 2.5L8 1"/></svg></div>
+            <span style="font-size:13px;font-weight:600;color:var(--accent-fg);flex:1;">Groceries</span>
+            <span style="font-size:11px;color:var(--text-2);">10 items</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--r-sm);">
+            <div style="width:16px;height:16px;border-radius:50%;border:1.5px solid var(--border);flex-shrink:0;"></div>
+            <span style="font-size:13px;font-weight:500;flex:1;">Hardware Store</span>
+            <span style="font-size:11px;color:var(--text-2);">3 items</span>
+          </div>
+        </div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-2);margin-bottom:7px;">Category</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+          <button style="padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;background:oklch(52% 0.17 145);color:white;border:none;cursor:pointer;">Produce</button>
+          <button style="padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;background:oklch(96% 0.04 245);color:oklch(38% 0.16 245);border:none;cursor:pointer;">Dairy</button>
+          <button style="padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;background:var(--surface-2);color:var(--text-2);border:none;cursor:pointer;">Meat</button>
+          <button style="padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;background:var(--surface-2);color:var(--text-2);border:1px dashed var(--border);cursor:pointer;display:inline-flex;align-items:center;gap:3px;">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 1v8M1 5h8"/></svg>Add
+          </button>
+        </div>
+      </div>
+      <!-- Input bar -->
+      <div class="input-bar">
+        <div class="plus-btn">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M8 2v12M2 8h12"/></svg>
+        </div>
+        <span style="flex:1;font-size:15px;color:var(--text-2);">Add an item…</span>
+        <div class="send-btn">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V3M3.5 7.5L8 3l4.5 4.5"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MY LISTS PANEL ────────────────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-title">My Lists Panel</div>
+    <div class="lists-panel">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:22px;font-weight:700;letter-spacing:-0.4px;">My Lists</span>
+        <button style="width:28px;height:28px;border-radius:var(--r-xs);background:var(--surface-2);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-2);">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 2l9 9M11 2L2 11"/></svg>
+        </button>
+      </div>
+      <div class="list-row list-row-active">
+        <div class="list-icon" style="background:var(--accent);">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        </div>
+        <div style="flex:1;"><div style="font-size:14px;font-weight:600;color:var(--accent-fg);">Groceries</div><div style="font-size:11px;color:var(--text-2);">10 items</div></div>
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="var(--accent-fg)" stroke-width="2.5" stroke-linecap="round"><path d="M2 7.5l4 4 7-8"/></svg>
+      </div>
+      <div class="list-row">
+        <div class="list-icon" style="background:var(--surface-2);">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" stroke-width="2" stroke-linecap="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        </div>
+        <div style="flex:1;"><div style="font-size:14px;font-weight:600;">Hardware Store</div><div style="font-size:11px;color:var(--text-2);">3 items</div></div>
+      </div>
+      <div class="list-row" style="border-bottom:1px solid var(--border);">
+        <div class="list-icon" style="background:var(--surface-2);">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" stroke-width="2" stroke-linecap="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        </div>
+        <div style="flex:1;"><div style="font-size:14px;font-weight:600;">Pharmacy</div><div style="font-size:11px;color:var(--text-2);">3 items</div></div>
+      </div>
+      <div style="padding:10px 16px;">
+        <button style="width:100%;padding:10px;background:transparent;border:1.5px dashed var(--border);border-radius:var(--r-sm);color:var(--text-2);font-weight:600;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-family:var(--font);">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6.5 1v11M1 6.5h11"/></svg>New List
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

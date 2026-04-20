@@ -13,6 +13,7 @@ export const onCreateCategory = /* GraphQL */ `subscription OnCreateCategory($fi
     color
     createdAt
     id
+    listId
     name
     updatedAt
     __typename
@@ -24,13 +25,18 @@ export const onCreateCategory = /* GraphQL */ `subscription OnCreateCategory($fi
 >;
 export const onCreateListItem = /* GraphQL */ `subscription OnCreateListItem($filter: ModelSubscriptionListItemFilterInput) {
   onCreateListItem(filter: $filter) {
+    attachments
     categoryId
     createdAt
     id
     isCompleted
+    listId
     name
+    notes
+    priority
     quantity
     sortOrder
+    subtasks
     updatedAt
     __typename
   }
@@ -38,6 +44,23 @@ export const onCreateListItem = /* GraphQL */ `subscription OnCreateListItem($fi
 ` as GeneratedSubscription<
   APITypes.OnCreateListItemSubscriptionVariables,
   APITypes.OnCreateListItemSubscription
+>;
+export const onCreateShoppingList = /* GraphQL */ `subscription OnCreateShoppingList(
+  $filter: ModelSubscriptionShoppingListFilterInput
+) {
+  onCreateShoppingList(filter: $filter) {
+    createdAt
+    id
+    name
+    sortOrder
+    updatedAt
+    userKey
+    __typename
+  }
+}
+` as GeneratedSubscription<
+  APITypes.OnCreateShoppingListSubscriptionVariables,
+  APITypes.OnCreateShoppingListSubscription
 >;
 export const onCreateUserPreference = /* GraphQL */ `subscription OnCreateUserPreference(
   $filter: ModelSubscriptionUserPreferenceFilterInput
@@ -61,6 +84,7 @@ export const onDeleteCategory = /* GraphQL */ `subscription OnDeleteCategory($fi
     color
     createdAt
     id
+    listId
     name
     updatedAt
     __typename
@@ -72,13 +96,18 @@ export const onDeleteCategory = /* GraphQL */ `subscription OnDeleteCategory($fi
 >;
 export const onDeleteListItem = /* GraphQL */ `subscription OnDeleteListItem($filter: ModelSubscriptionListItemFilterInput) {
   onDeleteListItem(filter: $filter) {
+    attachments
     categoryId
     createdAt
     id
     isCompleted
+    listId
     name
+    notes
+    priority
     quantity
     sortOrder
+    subtasks
     updatedAt
     __typename
   }
@@ -86,6 +115,23 @@ export const onDeleteListItem = /* GraphQL */ `subscription OnDeleteListItem($fi
 ` as GeneratedSubscription<
   APITypes.OnDeleteListItemSubscriptionVariables,
   APITypes.OnDeleteListItemSubscription
+>;
+export const onDeleteShoppingList = /* GraphQL */ `subscription OnDeleteShoppingList(
+  $filter: ModelSubscriptionShoppingListFilterInput
+) {
+  onDeleteShoppingList(filter: $filter) {
+    createdAt
+    id
+    name
+    sortOrder
+    updatedAt
+    userKey
+    __typename
+  }
+}
+` as GeneratedSubscription<
+  APITypes.OnDeleteShoppingListSubscriptionVariables,
+  APITypes.OnDeleteShoppingListSubscription
 >;
 export const onDeleteUserPreference = /* GraphQL */ `subscription OnDeleteUserPreference(
   $filter: ModelSubscriptionUserPreferenceFilterInput
@@ -109,6 +155,7 @@ export const onUpdateCategory = /* GraphQL */ `subscription OnUpdateCategory($fi
     color
     createdAt
     id
+    listId
     name
     updatedAt
     __typename
@@ -120,13 +167,18 @@ export const onUpdateCategory = /* GraphQL */ `subscription OnUpdateCategory($fi
 >;
 export const onUpdateListItem = /* GraphQL */ `subscription OnUpdateListItem($filter: ModelSubscriptionListItemFilterInput) {
   onUpdateListItem(filter: $filter) {
+    attachments
     categoryId
     createdAt
     id
     isCompleted
+    listId
     name
+    notes
+    priority
     quantity
     sortOrder
+    subtasks
     updatedAt
     __typename
   }
@@ -134,6 +186,23 @@ export const onUpdateListItem = /* GraphQL */ `subscription OnUpdateListItem($fi
 ` as GeneratedSubscription<
   APITypes.OnUpdateListItemSubscriptionVariables,
   APITypes.OnUpdateListItemSubscription
+>;
+export const onUpdateShoppingList = /* GraphQL */ `subscription OnUpdateShoppingList(
+  $filter: ModelSubscriptionShoppingListFilterInput
+) {
+  onUpdateShoppingList(filter: $filter) {
+    createdAt
+    id
+    name
+    sortOrder
+    updatedAt
+    userKey
+    __typename
+  }
+}
+` as GeneratedSubscription<
+  APITypes.OnUpdateShoppingListSubscriptionVariables,
+  APITypes.OnUpdateShoppingListSubscription
 >;
 export const onUpdateUserPreference = /* GraphQL */ `subscription OnUpdateUserPreference(
   $filter: ModelSubscriptionUserPreferenceFilterInput

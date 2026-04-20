@@ -1,48 +1,38 @@
 import { useState, useEffect, useMemo, useCallback, createContext } from 'react';
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "../amplify/data/resource";
-import { Moon, Sun, Plus, Trash2, Share2, X, Tag, ListTodo, ShoppingBag, Check, Square } from 'lucide-react';
 
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SplashScreen } from './components/SplashScreen';
-import { SortableItem } from './components/SortableItem';
-import { TeaserView } from './components/TeaserView';
+import { Header } from './components/Header';
+import { ProgressBar } from './components/ProgressBar';
+import { CategoryFilterBar } from './components/CategoryFilterBar';
+import { ListItemCard } from './components/ListItemCard';
+import { BottomInputBar } from './components/BottomInputBar';
+import { ItemDetailPanel } from './components/ItemDetailPanel';
+import { MyListsPanel } from './components/MyListsPanel';
+import { ShareModal } from './components/ShareModal';
+import { ConfirmModal } from './components/ConfirmModal';
+import { AddCategoryModal } from './components/AddCategoryModal';
+import { BottomNav } from './components/BottomNav';
+import { catDot, DEFAULT_CATEGORIES, type CatColorName } from './lib/categoryColors';
 
 export type Category = Schema['Category']['type'];
 export type ListItem = Schema['ListItem']['type'];
 export type UserPreference = Schema['UserPreference']['type'];
+export type ShoppingList = Schema['ShoppingList']['type'];
 
 type Theme = 'light' | 'dark';
 type SortMode = 'category' | 'custom';
+type Tab = 'list' | 'categories' | 'pro';
 
 const PREFERENCE_ID_STORAGE_KEY = 'airlist:preferenceId';
 const USER_KEY_STORAGE_KEY = 'airlist:userKey';
 const THEME_STORAGE_KEY = 'airlist:theme';
 const SORT_MODE_STORAGE_KEY = 'airlist:sortMode';
-
-const colorClasses: Record<string, { bg: string; text: string; pillBg: string }> = {
-  red: { bg: 'bg-red-500', text: 'text-red-500', pillBg: 'bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400' },
-  green: { bg: 'bg-emerald-500', text: 'text-emerald-500', pillBg: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' },
-  blue: { bg: 'bg-blue-500', text: 'text-blue-500', pillBg: 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400' },
-  orange: { bg: 'bg-orange-500', text: 'text-orange-500', pillBg: 'bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400' },
-  yellow: { bg: 'bg-amber-500', text: 'text-amber-500', pillBg: 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400' },
-  purple: { bg: 'bg-purple-500', text: 'text-purple-500', pillBg: 'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400' },
-  pink: { bg: 'bg-pink-500', text: 'text-pink-500', pillBg: 'bg-pink-50 dark:bg-pink-500/10 text-pink-700 dark:text-pink-400' },
-  gray: { bg: 'bg-zinc-500', text: 'text-zinc-500', pillBg: 'bg-zinc-100 dark:bg-zinc-500/20 text-zinc-700 dark:text-zinc-400' },
-};
-
-const DEFAULT_CATEGORIES = [
-  { name: 'Produce', color: 'green' },
-  { name: 'Meat', color: 'red' },
-  { name: 'Dairy', color: 'blue' },
-  { name: 'Pantry', color: 'orange' },
-  { name: 'General', color: 'gray' },
-] as const;
+const CURRENT_LIST_STORAGE_KEY = 'airlist:currentListId';
 
 const normalizeName = (value?: string | null) => value?.trim().toLowerCase() ?? '';
-const DEFAULT_CATEGORY_MAP = new Map(DEFAULT_CATEGORIES.map(category => [normalizeName(category.name), category]));
-
-const AVAILABLE_COLORS = Object.keys(colorClasses).filter(k => k !== 'text');
 
 type ThemeContextType = { isDark: boolean; toggleTheme: () => void };
 const ThemeContext = createContext<ThemeContextType>({ isDark: false, toggleTheme: () => {} });
@@ -52,56 +42,51 @@ function AppImpl() {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<ListItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [lists, setLists] = useState<ShoppingList[]>([]);
+  const [currentListId, setCurrentListId] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return window.localStorage.getItem(CURRENT_LIST_STORAGE_KEY);
+  });
   const [draggedId, setDraggedId] = useState<string | null>(null);
 
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window === 'undefined') return 'light';
     const stored = window.localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
-    if (stored === 'dark' || stored === 'light') {
-      return stored;
-    }
+    if (stored === 'dark' || stored === 'light') return stored;
     return 'light';
   });
   const isDark = theme === 'dark';
   const toggleTheme = useCallback(() => {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   }, []);
+
   const [sortMode, setSortMode] = useState<SortMode>(() => {
     if (typeof window === 'undefined') return 'category';
     const stored = window.localStorage.getItem(SORT_MODE_STORAGE_KEY) as SortMode | null;
-    if (stored === 'category' || stored === 'custom') {
-      return stored;
-    }
+    if (stored === 'category' || stored === 'custom') return stored;
     return 'category';
   });
   const [preference, setPreference] = useState<UserPreference | null>(null);
   const handleSortModeChange = useCallback((mode: SortMode) => {
     setSortMode(mode);
   }, []);
-  const [activeTab, setActiveTab] = useState<'list' | 'categories' | 'teaser'>('list');
+
+  const [activeTab, setActiveTab] = useState<Tab>('list');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newItemName, setNewItemName] = useState('');
-  const [newItemCat, setNewItemCat] = useState<string>('');
-  const [newItemQty, setNewItemQty] = useState(1);
+  const [detailItemId, setDetailItemId] = useState<string | null>(null);
+  const [showLists, setShowLists] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+  const [showAddCat, setShowAddCat] = useState(false);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editItem, setEditItem] = useState<ListItem | null>(null);
-  const [editItemName, setEditItemName] = useState('');
-  const [editItemCat, setEditItemCat] = useState<string>('');
-  const [editItemQty, setEditItemQty] = useState(1);
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    message: string;
+    onConfirm: () => void;
+  } | null>(null);
 
-  const [isAddCatModalOpen, setIsAddCatModalOpen] = useState(false);
-  const [newCatName, setNewCatName] = useState('');
-  const [newCatColor, setNewCatColor] = useState('gray');
-
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [deleteConfirmData, setDeleteConfirmData] = useState<{ type: 'item' | 'items' | 'category' | 'categories'; count: number; name?: string; ids?: string[] } | null>(null);
-
-  const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<Set<string>>(new Set());
-  const [isItemSelectionMode, setIsItemSelectionMode] = useState(false);
 
   const getOrCreateUserKey = useCallback(() => {
     if (typeof window === 'undefined') return 'anonymous';
@@ -116,6 +101,13 @@ function AppImpl() {
     }
     return key;
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (currentListId) {
+      window.localStorage.setItem(CURRENT_LIST_STORAGE_KEY, currentListId);
+    }
+  }, [currentListId]);
 
   useEffect(() => {
     if (preference) return;
@@ -161,10 +153,7 @@ function AppImpl() {
     };
 
     initialisePreference();
-
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [client, getOrCreateUserKey, theme, sortMode, preference]);
 
   useEffect(() => {
@@ -180,16 +169,11 @@ function AppImpl() {
   useEffect(() => {
     if (!preference) return;
     const updates: Partial<UserPreference> = {};
-    if (preference.theme !== theme) {
-      updates.theme = theme;
-    }
-    if (preference.sortMode !== sortMode) {
-      updates.sortMode = sortMode;
-    }
+    if (preference.theme !== theme) updates.theme = theme;
+    if (preference.sortMode !== sortMode) updates.sortMode = sortMode;
     if (Object.keys(updates).length === 0) return;
 
     let isCancelled = false;
-
     const persist = async () => {
       try {
         await client.models.UserPreference.update({ id: preference.id, ...updates });
@@ -200,103 +184,149 @@ function AppImpl() {
         console.error('Failed to persist user preference', error);
       }
     };
-
     persist();
-
-    return () => {
-      isCancelled = true;
-    };
+    return () => { isCancelled = true; };
   }, [client, preference, theme, sortMode]);
-
-  const isProtectedCategory = (category?: Category | null) => DEFAULT_CATEGORY_MAP.has(normalizeName(category?.name));
 
   useEffect(() => {
     let isMounted = true;
 
     const fetchData = async () => {
       try {
-        const [{ data: cats }, { data: itms }] = await Promise.all([
+        const [{ data: allLists }, { data: cats }, { data: itms }] = await Promise.all([
+          client.models.ShoppingList.list({}),
           client.models.Category.list({}),
-          client.models.ListItem.list({})
+          client.models.ListItem.list({}),
         ]);
+
+        const validLists = allLists.filter(Boolean);
         const validCats = cats.filter(Boolean);
         const validItems = itms.filter(Boolean);
 
-        const categoryByName = new Map<string, Category>();
-        const duplicateCategories: Category[] = [];
-
-        for (const category of validCats) {
-          const normalized = normalizeName(category.name);
-          if (!normalized) continue;
-
-          if (!categoryByName.has(normalized)) {
-            categoryByName.set(normalized, category);
-          } else {
-            duplicateCategories.push(category);
-          }
-        }
-
-        let mergedItems = [...validItems];
-
-        for (const duplicate of duplicateCategories) {
-          const primaryCategory = categoryByName.get(normalizeName(duplicate.name));
-          if (!primaryCategory || primaryCategory.id === duplicate.id) continue;
-
-          const itemsToReassign = mergedItems.filter(item => item.categoryId === duplicate.id);
-          if (itemsToReassign.length > 0) {
-            await Promise.all(
-              itemsToReassign.map(item => client.models.ListItem.update({ id: item.id, categoryId: primaryCategory.id }))
-            );
-            mergedItems = mergedItems.map(item =>
-              item.categoryId === duplicate.id ? { ...item, categoryId: primaryCategory.id } : item
-            );
-          }
-
-          await client.models.Category.delete({ id: duplicate.id });
-        }
-
-        const missingDefaults = DEFAULT_CATEGORIES.filter(category => !categoryByName.has(normalizeName(category.name)));
-        for (const category of missingDefaults) {
-          const { data: createdCategory } = await client.models.Category.create(category);
-          if (createdCategory) {
-            categoryByName.set(normalizeName(createdCategory.name), createdCategory);
-          }
-        }
-
-        const nextCategories = Array.from(categoryByName.values()).sort((a, b) =>
-          (a.name ?? '').localeCompare(b.name ?? '')
-        );
-
         if (isMounted) {
+          setLists(validLists);
+
+          let activeListId = currentListId;
+          if (!activeListId && validLists.length > 0) {
+            activeListId = validLists[0].id;
+            setCurrentListId(activeListId);
+          }
+
+          if (validLists.length > 0) {
+            const groceriesList = validLists.find(l => l.name === 'Groceries');
+            if (groceriesList) {
+              const listCats = validCats.filter(c => c.listId === groceriesList.id);
+              if (listCats.length === 0) {
+                for (const def of DEFAULT_CATEGORIES) {
+                  await client.models.Category.create({
+                    name: def.name,
+                    color: def.color,
+                    listId: groceriesList.id,
+                  });
+                }
+              }
+            }
+          }
+
+          const categoryByName = new Map<string, Category>();
+          const duplicateCategories: Category[] = [];
+          for (const category of validCats) {
+            const normalized = normalizeName(category.name);
+            if (!normalized) continue;
+            const key = `${category.listId ?? ''}:${normalized}`;
+            if (!categoryByName.has(key)) {
+              categoryByName.set(key, category);
+            } else {
+              duplicateCategories.push(category);
+            }
+          }
+
+          let mergedItems = [...validItems];
+          for (const duplicate of duplicateCategories) {
+            const key = `${duplicate.listId ?? ''}:${normalizeName(duplicate.name)}`;
+            const primaryCategory = categoryByName.get(key);
+            if (!primaryCategory || primaryCategory.id === duplicate.id) continue;
+
+            const itemsToReassign = mergedItems.filter(item => item.categoryId === duplicate.id);
+            if (itemsToReassign.length > 0) {
+              await Promise.all(
+                itemsToReassign.map(item => client.models.ListItem.update({ id: item.id, categoryId: primaryCategory.id }))
+              );
+              mergedItems = mergedItems.map(item =>
+                item.categoryId === duplicate.id ? { ...item, categoryId: primaryCategory.id } : item
+              );
+            }
+            await client.models.Category.delete({ id: duplicate.id });
+          }
+
+          const nextCategories = Array.from(categoryByName.values()).sort((a, b) =>
+            (a.name ?? '').localeCompare(b.name ?? '')
+          );
+
           setCategories(nextCategories);
           setItems([...mergedItems].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)));
-          if (nextCategories.length > 0) setNewItemCat(nextCategories[0].id);
         }
       } catch (err) {
         console.error("Failed to fetch data", err);
       }
     };
 
-    const categoryCreateSub = client.models.Category.onCreate().subscribe({
+    const listCreateSub = client.models.ShoppingList.onCreate().subscribe({
       next: (data) => {
         if (isMounted && data?.id) {
-          const incomingCategory = data as Category;
-          const normalized = normalizeName(incomingCategory.name);
-          setCategories(prev => {
-            if (prev.some(c => c.id === incomingCategory.id)) return prev;
-            if (prev.some(c => normalizeName(c.name) === normalized)) return prev;
-            return [...prev, incomingCategory].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
+          setLists(prev => {
+            if (prev.some(l => l.id === data.id)) return prev;
+            return [...prev, data as ShoppingList];
           });
         }
       },
-      error: (err) => console.error("Category create subscription error:", err)
+      error: (err) => console.error("ShoppingList create subscription error:", err),
+    });
+
+    const listUpdateSub = client.models.ShoppingList.onUpdate().subscribe({
+      next: (data) => {
+        if (isMounted) setLists(prev => prev.map(l => l.id === (data as ShoppingList).id ? data as ShoppingList : l));
+      },
+      error: (err) => console.error("ShoppingList update subscription error:", err),
+    });
+
+    const listDeleteSub = client.models.ShoppingList.onDelete().subscribe({
+      next: (data) => {
+        if (isMounted) {
+          const deletedId = (data as ShoppingList).id;
+          setLists(prev => prev.filter(l => l.id !== deletedId));
+          if (currentListId === deletedId) {
+            setCurrentListId(() => {
+              const remaining = lists.filter(l => l.id !== deletedId);
+              return remaining.length > 0 ? remaining[0].id : null;
+            });
+          }
+        }
+      },
+      error: (err) => console.error("ShoppingList delete subscription error:", err),
+    });
+
+    const categoryCreateSub = client.models.Category.onCreate().subscribe({
+      next: (data) => {
+        if (isMounted && data?.id) {
+          const incoming = data as Category;
+          const normalized = normalizeName(incoming.name);
+          setCategories(prev => {
+            if (prev.some(c => c.id === incoming.id)) return prev;
+            const key = `${incoming.listId ?? ''}:${normalized}`;
+            if (prev.some(c => `${c.listId ?? ''}:${normalizeName(c.name)}` === key)) return prev;
+            return [...prev, incoming].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
+          });
+        }
+      },
+      error: (err) => console.error("Category create subscription error:", err),
     });
 
     const categoryUpdateSub = client.models.Category.onUpdate().subscribe({
       next: (data) => {
         if (isMounted) setCategories(prev => prev.map(c => c.id === (data as Category).id ? data as Category : c));
       },
-      error: (err) => console.error("Category update subscription error:", err)
+      error: (err) => console.error("Category update subscription error:", err),
     });
 
     const categoryDeleteSub = client.models.Category.onDelete().subscribe({
@@ -307,7 +337,7 @@ function AppImpl() {
           setItems(prev => prev.filter(i => i.categoryId !== deletedId));
         }
       },
-      error: (err) => console.error("Category delete subscription error:", err)
+      error: (err) => console.error("Category delete subscription error:", err),
     });
 
     const itemCreateSub = client.models.ListItem.onCreate().subscribe({
@@ -319,27 +349,30 @@ function AppImpl() {
           });
         }
       },
-      error: (err) => console.error("ListItem create subscription error:", err)
+      error: (err) => console.error("ListItem create subscription error:", err),
     });
 
     const itemUpdateSub = client.models.ListItem.onUpdate().subscribe({
       next: (data) => {
         if (isMounted) setItems(prev => prev.map(i => i.id === (data as ListItem).id ? data as ListItem : i));
       },
-      error: (err) => console.error("ListItem update subscription error:", err)
+      error: (err) => console.error("ListItem update subscription error:", err),
     });
 
     const itemDeleteSub = client.models.ListItem.onDelete().subscribe({
       next: (data) => {
         if (isMounted) setItems(prev => prev.filter(i => i.id !== (data as ListItem).id));
       },
-      error: (err) => console.error("ListItem delete subscription error:", err)
+      error: (err) => console.error("ListItem delete subscription error:", err),
     });
 
     fetchData();
 
     return () => {
       isMounted = false;
+      listCreateSub.unsubscribe();
+      listUpdateSub.unsubscribe();
+      listDeleteSub.unsubscribe();
       categoryCreateSub.unsubscribe();
       categoryUpdateSub.unsubscribe();
       categoryDeleteSub.unsubscribe();
@@ -347,6 +380,7 @@ function AppImpl() {
       itemUpdateSub.unsubscribe();
       itemDeleteSub.unsubscribe();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client]);
 
   useEffect(() => {
@@ -360,104 +394,76 @@ function AppImpl() {
     body.style.colorScheme = theme;
   }, [isDark, theme]);
 
+  const listCategories = useMemo(
+    () => categories.filter(c => c.listId === currentListId),
+    [categories, currentListId],
+  );
+
+  const listItems = useMemo(
+    () => items.filter(i => i.listId === currentListId),
+    [items, currentListId],
+  );
+
   const categoryOrder = useMemo(() => {
     const order = new Map<string, number>();
-    categories.forEach((category, index) => {
+    listCategories.forEach((category, index) => {
       if (category.id) order.set(category.id, index);
     });
     return order;
-  }, [categories]);
+  }, [listCategories]);
 
   const filteredItems = useMemo(() => {
-    let result = items;
+    let result = listItems;
     if (selectedCategory) {
-      result = items.filter(i => i.categoryId === selectedCategory);
+      result = result.filter(i => i.categoryId === selectedCategory);
     }
 
     return [...result].sort((a, b) => {
+      const aPriority = a.priority ? 0 : 1;
+      const bPriority = b.priority ? 0 : 1;
+      if (aPriority !== bPriority) return aPriority - bPriority;
+
       if (sortMode === 'custom') {
         return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
       }
 
       const orderA = a.categoryId ? categoryOrder.get(a.categoryId) ?? Number.MAX_SAFE_INTEGER : Number.MAX_SAFE_INTEGER;
       const orderB = b.categoryId ? categoryOrder.get(b.categoryId) ?? Number.MAX_SAFE_INTEGER : Number.MAX_SAFE_INTEGER;
-
       if (orderA !== orderB) return orderA - orderB;
 
-      const nameA = a.name ?? '';
-      const nameB = b.name ?? '';
-      return nameA.localeCompare(nameB, undefined, { sensitivity: 'base' });
+      return (a.name ?? '').localeCompare(b.name ?? '', undefined, { sensitivity: 'base' });
     });
-  }, [items, selectedCategory, sortMode, categoryOrder]);
+  }, [listItems, selectedCategory, sortMode, categoryOrder]);
+
+  const doneCount = useMemo(() => listItems.filter(i => i.isCompleted).length, [listItems]);
+  const totalCount = listItems.length;
+
+  const currentListName = useMemo(() => {
+    const list = lists.find(l => l.id === currentListId);
+    return list?.name ?? 'Shopping List';
+  }, [lists, currentListId]);
+
+  const itemCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const item of listItems) {
+      if (item.categoryId) {
+        counts[item.categoryId] = (counts[item.categoryId] ?? 0) + 1;
+      }
+    }
+    return counts;
+  }, [listItems]);
 
   const toggleItem = async (id: string, currentStatus: boolean) => {
     setItems(prev => prev.map(i => i.id === id ? { ...i, isCompleted: !currentStatus } : i));
     await client.models.ListItem.update({ id, isCompleted: !currentStatus });
   };
 
-  const handleToggleSelectAllItems = useCallback(() => {
-    setSelectedItemIds(prev => {
-      const filteredIds = filteredItems.map(item => item.id);
-      if (filteredIds.length === 0) return prev;
-      const allSelected = filteredIds.every(id => prev.has(id));
-      const next = new Set(prev);
-      if (allSelected) {
-        filteredIds.forEach(id => next.delete(id));
-      } else {
-        filteredIds.forEach(id => next.add(id));
-      }
-      return next;
-    });
-  }, [filteredItems]);
-
-  const requestDeleteItems = (ids: string[]) => {
-    if (ids.length === 0) return;
-
-    const uniqueIds = Array.from(new Set(ids));
-    const targetItems = items.filter(item => uniqueIds.includes(item.id));
-    if (targetItems.length === 0) return;
-
-    setDeleteConfirmData({
-      type: uniqueIds.length > 1 ? 'items' : 'item',
-      count: uniqueIds.length,
-      name: uniqueIds.length === 1 ? targetItems[0].name ?? 'this item' : undefined,
-      ids: uniqueIds,
-    });
-    setIsDeleteConfirmOpen(true);
-  };
-
-  const requestDeleteCategories = (ids: string[]) => {
-    const uniqueIds = Array.from(new Set(ids));
-    const targetCategories = categories.filter(category => uniqueIds.includes(category.id) && !isProtectedCategory(category));
-    if (targetCategories.length === 0) return;
-
-    setDeleteConfirmData({
-      type: targetCategories.length > 1 ? 'categories' : 'category',
-      count: targetCategories.length,
-      name: targetCategories.length === 1 ? targetCategories[0].name ?? 'this category' : undefined,
-      ids: targetCategories.map(category => category.id),
-    });
-    setIsDeleteConfirmOpen(true);
-  };
-
-  const deleteItem = async (id: string) => {
-    requestDeleteItems([id]);
-  };
-
-  const deleteSelectedItems = async () => {
-    requestDeleteItems(Array.from(selectedItemIds));
-  };
-
-  const toggleItemSelection = (id: string) => {
-    setSelectedItemIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
+  const togglePriority = async (id: string) => {
+    const item = items.find(i => i.id === id);
+    if (!item) return;
+    const newPriority = !item.priority;
+    setItems(prev => prev.map(i => i.id === id ? { ...i, priority: newPriority } : i));
+    await client.models.ListItem.update({ id, priority: newPriority });
   };
 
   const updateItem = async (id: string, updates: Partial<ListItem>) => {
@@ -465,744 +471,598 @@ function AppImpl() {
     await client.models.ListItem.update({ id, ...updates });
   };
 
-  const openEditModal = (item: ListItem) => {
-    setEditItem(item);
-    setEditItemName(item.name ?? '');
-    setEditItemCat(item.categoryId ?? '');
-    setEditItemQty(item.quantity ?? 1);
-    setIsEditModalOpen(true);
-  };
+  const handleAddItem = async (name: string, listId: string, categoryId: string | null) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
 
-  const handleUpdateItem = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editItem || !editItemName.trim() || !editItemCat) return;
+    const catId = categoryId ?? (listCategories.length > 0 ? listCategories[0].id : undefined);
+    if (!catId) return;
 
-    const normalizedName = editItemName.trim().toLowerCase();
-    const existingItem = items.find(
-      item => item.id !== editItem.id && 
-              item.name?.toLowerCase() === normalizedName && 
-              item.categoryId === editItemCat
+    const normalizedName = trimmed.toLowerCase();
+    const itemExists = listItems.some(
+      item => item.name?.toLowerCase() === normalizedName && item.categoryId === catId,
     );
-    if (existingItem) {
-      alert('An item with this name already exists in the selected category.');
-      return;
-    }
+    if (itemExists) return;
 
-    await updateItem(editItem.id, {
-      name: editItemName.trim(),
-      categoryId: editItemCat,
-      quantity: editItemQty
+    const payload = {
+      name: trimmed,
+      categoryId: catId,
+      listId,
+      quantity: 1,
+      isCompleted: false,
+      sortOrder: listItems.length,
+      priority: false,
+    };
+
+    const { data } = await client.models.ListItem.create(payload);
+    if (data) setItems(prev => [...prev, data]);
+  };
+
+  const handleAddCategory = async (name: string, color: CatColorName) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+
+    const normalizedInput = normalizeName(trimmed);
+    const categoryExists = listCategories.some(cat => normalizeName(cat.name) === normalizedInput);
+    if (categoryExists) return;
+
+    const { data } = await client.models.Category.create({
+      name: trimmed,
+      color,
+      listId: currentListId ?? undefined,
     });
-
-    setIsEditModalOpen(false);
-    setEditItem(null);
+    if (data) {
+      setCategories(prev => [...prev, data].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '')));
+    }
   };
 
-  const deleteCategory = async (id: string) => {
-    requestDeleteCategories([id]);
+  const handleAddList = async (name: string) => {
+    const userKey = getOrCreateUserKey();
+    const { data } = await client.models.ShoppingList.create({
+      name,
+      userKey,
+      sortOrder: lists.length,
+    });
+    if (data) {
+      setLists(prev => [...prev, data]);
+      setCurrentListId(data.id);
+    }
   };
 
-  const deleteSelectedCategories = async () => {
-    requestDeleteCategories(Array.from(selectedCategoryIds));
+  const handleDeleteItem = (id: string) => {
+    const item = items.find(i => i.id === id);
+    const itemName = item?.name ?? 'this item';
+    setDeleteConfirm({
+      message: `Are you sure you want to delete "${itemName}"? This action cannot be undone.`,
+      onConfirm: async () => {
+        setItems(prev => prev.filter(i => i.id !== id));
+        setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next; });
+        await client.models.ListItem.delete({ id });
+        setDeleteConfirm(null);
+      },
+    });
+  };
+
+  const handleDeleteSelectedItems = () => {
+    if (selectedIds.size === 0) return;
+    setDeleteConfirm({
+      message: `Are you sure you want to delete ${selectedIds.size} item${selectedIds.size > 1 ? 's' : ''}? This action cannot be undone.`,
+      onConfirm: async () => {
+        const ids = Array.from(selectedIds);
+        setItems(prev => prev.filter(i => !ids.includes(i.id)));
+        setSelectedIds(new Set());
+        setSelectionMode(false);
+        await Promise.all(ids.map(id => client.models.ListItem.delete({ id })));
+        setDeleteConfirm(null);
+      },
+    });
+  };
+
+  const handleDeleteCategory = (id: string) => {
+    const cat = categories.find(c => c.id === id);
+    const catName = cat?.name ?? 'this category';
+    setDeleteConfirm({
+      message: `Are you sure you want to delete "${catName}"? Items assigned to it will also be deleted.`,
+      onConfirm: async () => {
+        setCategories(prev => prev.filter(c => c.id !== id));
+        setItems(prev => prev.filter(i => i.categoryId !== id));
+        if (selectedCategory === id) setSelectedCategory(null);
+        setSelectedCategoryIds(prev => { const next = new Set(prev); next.delete(id); return next; });
+        await client.models.Category.delete({ id });
+        setDeleteConfirm(null);
+      },
+    });
+  };
+
+  const handleDeleteSelectedCategories = () => {
+    if (selectedCategoryIds.size === 0) return;
+    setDeleteConfirm({
+      message: `Are you sure you want to delete ${selectedCategoryIds.size} categor${selectedCategoryIds.size > 1 ? 'ies' : 'y'}? Items assigned to them will also be deleted.`,
+      onConfirm: async () => {
+        const ids = Array.from(selectedCategoryIds);
+        setCategories(prev => prev.filter(c => !ids.includes(c.id)));
+        setItems(prev => prev.filter(i => !ids.includes(i.categoryId ?? '')));
+        if (selectedCategory && ids.includes(selectedCategory)) setSelectedCategory(null);
+        setSelectedCategoryIds(new Set());
+        await Promise.all(ids.map(id => client.models.Category.delete({ id })));
+        setDeleteConfirm(null);
+      },
+    });
   };
 
   const toggleCategorySelection = (id: string) => {
     setSelectedCategoryIds(prev => {
       const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
+      if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
   };
 
   const handleReorder = async (sourceId: string, targetId: string) => {
-    if (sortMode !== 'custom') {
-      handleSortModeChange('custom');
-    }
-    const newItems = [...items];
+    if (sortMode !== 'custom') handleSortModeChange('custom');
+    const newItems = [...listItems];
     const sourceIndex = newItems.findIndex(i => i.id === sourceId);
     const targetIndex = newItems.findIndex(i => i.id === targetId);
-
     if (sourceIndex === -1 || targetIndex === -1) return;
 
     const [movedItem] = newItems.splice(sourceIndex, 1);
     newItems.splice(targetIndex, 0, movedItem);
 
     const updatedItems = newItems.map((item, index) => ({ ...item, sortOrder: index }));
-    setItems(updatedItems);
+    setItems(prev => prev.map(item => {
+      const updated = updatedItems.find(u => u.id === item.id);
+      return updated ? { ...item, sortOrder: updated.sortOrder } : item;
+    }));
 
     updatedItems.forEach(item => {
       client.models.ListItem.update({ id: item.id, sortOrder: item.sortOrder });
     });
-
-    const customSortName = "Custom Sort";
-    const customCat = categories.find(c => c.name === customSortName);
-
-    if (!customCat) {
-      const { data } = await client.models.Category.create({
-        name: customSortName,
-        color: 'purple'
-      });
-      if (data) setCategories(prev => [...prev, data]);
-    }
   };
 
-  const handleAddItem = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newItemName.trim() || !newItemCat) return;
-
-    const normalizedName = newItemName.trim().toLowerCase();
-    const itemExists = items.some(
-      item => item.name?.toLowerCase() === normalizedName && item.categoryId === newItemCat
-    );
-    if (itemExists) {
-      alert('An item with this name already exists in the selected category.');
-      return;
-    }
-
-    const payload = {
-      name: newItemName.trim(),
-      categoryId: newItemCat,
-      quantity: newItemQty,
-      isCompleted: false,
-      sortOrder: items.length
-    };
-
-    setIsAddModalOpen(false);
-    setNewItemName('');
-    setNewItemQty(1);
-
-    const { data } = await client.models.ListItem.create(payload);
-    if (data) setItems(prev => [...prev, data]);
+  const handleToggleSubtask = async (itemId: string, subtaskId: string) => {
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
+    const subtasks: { id: string; name: string; done: boolean }[] = Array.isArray(item.subtasks) ? item.subtasks : [];
+    const updated = subtasks.map(s => s.id === subtaskId ? { ...s, done: !s.done } : s);
+    await updateItem(itemId, { subtasks: updated });
   };
 
-  const handleAddCategory = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newCatName.trim()) return;
-
-    const normalizedInput = normalizeName(newCatName);
-    const categoryExists = categories.some(cat => normalizeName(cat.name) === normalizedInput);
-    if (categoryExists) {
-      alert('A category with this name already exists.');
-      return;
-    }
-
-    setIsAddCatModalOpen(false);
-    const { data } = await client.models.Category.create({
-      name: newCatName.trim(),
-      color: newCatColor
-    });
-    if (data) {
-      setCategories(prev => [...prev, data].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '')));
-    }
-    setNewCatName('');
-    setNewCatColor('gray');
+  const handleAddSubtask = async (itemId: string, name: string) => {
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
+    const subtasks: { id: string; name: string; done: boolean }[] = Array.isArray(item.subtasks) ? item.subtasks : [];
+    const updated = [...subtasks, { id: crypto.randomUUID(), name, done: false }];
+    await updateItem(itemId, { subtasks: updated });
   };
+
+  const handleDeleteSubtask = async (itemId: string, subtaskId: string) => {
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
+    const subtasks: { id: string; name: string; done: boolean }[] = Array.isArray(item.subtasks) ? item.subtasks : [];
+    const updated = subtasks.filter(s => s.id !== subtaskId);
+    await updateItem(itemId, { subtasks: updated });
+  };
+
+  const detailItem = useMemo(() => {
+    if (!detailItemId) return null;
+    return items.find(i => i.id === detailItemId) ?? null;
+  }, [detailItemId, items]);
 
   if (loading) return <SplashScreen onComplete={() => setLoading(false)} />;
 
   return (
     <ThemeContext.Provider value={{ isDark, toggleTheme }}>
-      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans selection:bg-zinc-200 dark:selection:bg-zinc-800 overflow-hidden flex flex-col transition-colors duration-300">
+      <div
+        style={{
+          height: '100dvh',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          background: 'var(--bg)',
+          color: 'var(--text)',
+          fontFamily: 'var(--font)',
+        }}
+      >
+        <Header
+          listName={currentListName}
+          doneCount={doneCount}
+          totalCount={totalCount}
+          isDark={isDark}
+          selectionMode={selectionMode}
+          onToggleTheme={toggleTheme}
+          onOpenLists={() => setShowLists(true)}
+          onOpenShare={() => setShowShare(true)}
+          onToggleSelectionMode={() => {
+            setSelectionMode(prev => !prev);
+            if (selectionMode) setSelectedIds(new Set());
+          }}
+        />
 
-        <header className="px-4 sm:px-6 pt-8 sm:pt-10 pb-3 sm:pb-4 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md sticky top-0 z-20 border-b border-zinc-200 dark:border-zinc-900">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-zinc-900 dark:bg-white rounded-lg flex items-center justify-center">
-                <ShoppingBag size={18} className="text-white dark:text-zinc-900" />
-              </div>
-              <h1 className="text-xl font-bold tracking-tight">AirList</h1>
-            </div>
-            <div className="flex items-center gap-2">
-              {activeTab === 'list' && !isAddModalOpen && !isEditModalOpen && !isDeleteConfirmOpen && filteredItems.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setIsItemSelectionMode(!isItemSelectionMode)}
-                  className={`cursor-pointer p-1.5 rounded-md text-zinc-600 dark:text-zinc-400 active:scale-95 transition-transform ${isItemSelectionMode ? 'bg-zinc-200 dark:bg-zinc-800' : ''}`}
-                  aria-label={isItemSelectionMode ? 'Exit selection mode' : 'Enter selection mode'}
-                >
-                  {isItemSelectionMode ? <Check size={18} /> : <Square size={18} />}
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={toggleTheme}
-                className="cursor-pointer p-1.5 rounded-md bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 active:scale-95 transition-transform"
-                aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-              >
-                {isDark ? <Sun size={18} /> : <Moon size={18} />}
-              </button>
-            </div>
-          </div>
-        </header>
+        <ProgressBar doneCount={doneCount} totalCount={totalCount} />
 
-        <main className="flex-1 overflow-y-auto pb-28 custom-scrollbar">
+        {activeTab === 'list' && (
+          <CategoryFilterBar
+            categories={listCategories.map(c => ({ id: c.id, name: c.name ?? '', color: c.color ?? 'gray' }))}
+            selectedCat={selectedCategory}
+            sortMode={sortMode}
+            isDark={isDark}
+            onSelectCat={setSelectedCategory}
+            onToggleSort={() => handleSortModeChange(sortMode === 'category' ? 'custom' : 'category')}
+            itemCounts={itemCounts}
+            allItemCount={listItems.length}
+          />
+        )}
 
+        <main style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }} className="custom-scrollbar">
           {activeTab === 'list' && (
-            <div className="flex flex-col h-full animate-in fade-in duration-200">
-
-              <div className="px-4 sm:px-6 pt-4 pb-2 flex flex-col gap-2">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Sort Items</span>
-                  <div
-                    role="group"
-                    aria-label="Sort mode"
-                    className="inline-flex rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden"
-                  >
+            <div style={{ padding: '0 14px', paddingBottom: 160 }}>
+              {selectionMode && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '8px 0',
+                  position: 'sticky',
+                  top: 0,
+                  background: 'var(--bg)',
+                  zIndex: 10,
+                }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)' }}>
+                    {selectedIds.size} selected
+                  </span>
+                  <div style={{ display: 'flex', gap: 8 }}>
                     <button
-                      type="button"
-                      onClick={() => handleSortModeChange('category')}
-                      className={`cursor-pointer px-3 py-1.5 text-xs font-semibold transition-colors ${sortMode === 'category' ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900' : 'text-zinc-600 dark:text-zinc-400'}`}
-                      aria-pressed={sortMode === 'category'}
+                      onClick={() => {
+                        const allIds = filteredItems.map(i => i.id);
+                        const allSelected = allIds.length > 0 && allIds.every(id => selectedIds.has(id));
+                        if (allSelected) {
+                          setSelectedIds(new Set());
+                        } else {
+                          setSelectedIds(new Set(allIds));
+                        }
+                      }}
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        padding: '6px 12px',
+                        borderRadius: 'var(--r-sm)',
+                        background: 'var(--surface-2)',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: 'var(--text)',
+                      }}
                     >
-                      By Category
+                      {filteredItems.length > 0 && selectedIds.size >= filteredItems.length ? 'Deselect All' : 'Select All'}
                     </button>
                     <button
-                      type="button"
-                      onClick={() => handleSortModeChange('custom')}
-                      className={`cursor-pointer px-3 py-1.5 text-xs font-semibold transition-colors border-l border-zinc-200 dark:border-zinc-800 ${sortMode === 'custom' ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900' : 'text-zinc-600 dark:text-zinc-400'}`}
-                      aria-pressed={sortMode === 'custom'}
+                      onClick={handleDeleteSelectedItems}
+                      disabled={selectedIds.size === 0}
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        padding: '6px 12px',
+                        borderRadius: 'var(--r-sm)',
+                        background: 'var(--danger)',
+                        border: 'none',
+                        cursor: selectedIds.size === 0 ? 'not-allowed' : 'pointer',
+                        color: '#fff',
+                        opacity: selectedIds.size === 0 ? 0.5 : 1,
+                      }}
                     >
-                      Custom
+                      Delete
+                    </button>
+                    <button
+                      onClick={() => { setSelectionMode(false); setSelectedIds(new Set()); }}
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        padding: '6px 12px',
+                        borderRadius: 'var(--r-sm)',
+                        background: 'var(--surface-2)',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: 'var(--text)',
+                      }}
+                    >
+                      Cancel
                     </button>
                   </div>
                 </div>
-              </div>
+              )}
 
-              <div className="px-4 sm:px-6 pb-4 overflow-hidden">
-                <div className="flex gap-2 overflow-x-auto no-scrollbar snap-x px-0">
-                <button
-                  type="button"
-                  onClick={() => setSelectedCategory(null)}
-                  className={`cursor-pointer snap-start whitespace-nowrap px-3 py-1.5 rounded text-xs font-semibold uppercase tracking-wider transition-all ${
-                    selectedCategory === null
-                      ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-sm'
-                      : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800'
-                  }`}
-                >
-                  All
-                </button>
-                {categories.map(cat => (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => setSelectedCategory(cat.id)}
-                    className={`cursor-pointer snap-start whitespace-nowrap px-3 py-1.5 rounded text-xs font-semibold uppercase tracking-wider transition-all ${
-                      selectedCategory === cat.id
-                        ? `${colorClasses[cat.color ?? 'gray'].bg} text-white shadow-sm`
-                        : `${colorClasses[cat.color ?? 'gray'].pillBg} border border-transparent`
-                    }`}
-                  >
-                    {cat.name}
-                  </button>
-                ))}
+              {filteredItems.length === 0 && !selectionMode && (
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: 160,
+                  opacity: 0.4,
+                  textAlign: 'center',
+                }}>
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <path d="M16 10a4 4 0 0 1-8 0" />
+                  </svg>
+                  <p style={{ fontSize: 15, fontWeight: 500, marginTop: 12 }}>List is empty</p>
                 </div>
-              </div>
+              )}
 
-              <div className="px-4 sm:px-6 flex-1">
-                {filteredItems.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-40 text-center opacity-40">
-                    <div className="mb-3"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg></div>
-                    <p className="text-base font-medium">List is empty</p>
-                  </div>
-                ) : (
-                  <div className="pb-4">
-                    {isItemSelectionMode && (
-                      <div className="flex items-center justify-between mb-3 sticky top-16 bg-zinc-50 dark:bg-zinc-950 py-2 -mx-4 px-4 sm:-mx-6 sm:px-6 z-10">
-                        <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                          {selectedItemIds.size} selected
-                        </span>
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            onClick={handleToggleSelectAllItems}
-                            className="cursor-pointer text-xs font-semibold px-3 py-1.5 rounded-md bg-zinc-200 dark:bg-zinc-800"
-                          >
-                            {filteredItems.length > 0 && selectedItemIds.size >= filteredItems.length ? 'Deselect All' : 'Select All'}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={deleteSelectedItems}
-                            disabled={selectedItemIds.size === 0}
-                            className="cursor-pointer text-xs font-semibold px-3 py-1.5 rounded-md bg-red-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            Delete
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsItemSelectionMode(false);
-                              setSelectedItemIds(new Set());
-                            }}
-                            className="cursor-pointer text-xs font-semibold px-3 py-1.5 rounded-md bg-zinc-200 dark:bg-zinc-800"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                    {filteredItems.map(item => (
-                      <SortableItem
-                        key={item.id}
-                        item={item}
-                        category={categories.find(c => c.id === item.categoryId) ?? undefined}
-                        colorClasses={colorClasses}
-                        onToggle={toggleItem}
-                        onDelete={deleteItem}
-                        onEdit={openEditModal}
-                        draggedId={draggedId}
-                        setDraggedId={setDraggedId}
-                        onReorder={handleReorder}
-                        isSelectionMode={isItemSelectionMode}
-                        isSelected={selectedItemIds.has(item.id)}
-                        onSelectToggle={toggleItemSelection}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
+              {filteredItems.map(item => {
+                const cat = categories.find(c => c.id === item.categoryId);
+                const subtasks: { id: string; name: string; done: boolean }[] = Array.isArray(item.subtasks) ? item.subtasks : [];
+                return (
+                  <ListItemCard
+                    key={item.id}
+                    id={item.id}
+                    name={item.name ?? ''}
+                    isCompleted={item.isCompleted ?? false}
+                    priority={item.priority ?? false}
+                    quantity={item.quantity ?? 1}
+                    categoryName={cat?.name ?? ''}
+                    categoryColor={cat?.color ?? 'gray'}
+                    subtasks={subtasks}
+                    isDark={isDark}
+                    selectionMode={selectionMode}
+                    isSelected={selectedIds.has(item.id)}
+                    onToggleComplete={(id) => toggleItem(id, item.isCompleted ?? false)}
+                    onTogglePriority={togglePriority}
+                    onDelete={handleDeleteItem}
+                    onViewDetail={(id) => setDetailItemId(id)}
+                    onToggleSelect={(id) => {
+                      setSelectedIds(prev => {
+                        const next = new Set(prev);
+                        if (next.has(id)) next.delete(id); else next.add(id);
+                        return next;
+                      });
+                    }}
+                    onDragStart={setDraggedId}
+                    onDragEnd={() => setDraggedId(null)}
+                    onDragOver={(id) => {
+                      if (draggedId && draggedId !== id) {
+                        handleReorder(draggedId, id);
+                      }
+                    }}
+                  />
+                );
+              })}
             </div>
           )}
 
           {activeTab === 'categories' && (
-            <div className="p-6 animate-in fade-in duration-200">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <h2 className="text-xl font-bold">Categories</h2>
+            <div style={{ padding: '20px 14px', paddingBottom: 160 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <h2 style={{ fontSize: 20, fontWeight: 700 }}>Categories</h2>
                   {selectedCategoryIds.size > 0 && (
-                    <span className="text-xs font-medium px-2 py-0.5 bg-zinc-200 dark:bg-zinc-800 rounded-full">
+                    <span style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      padding: '2px 8px',
+                      borderRadius: 999,
+                      background: 'var(--surface-2)',
+                    }}>
                       {selectedCategoryIds.size}
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
+                <div style={{ display: 'flex', gap: 8 }}>
                   {selectedCategoryIds.size > 0 && (
                     <button
-                      type="button"
-                      onClick={deleteSelectedCategories}
-                      className="cursor-pointer text-xs font-semibold px-3 py-1.5 rounded-md bg-red-500 text-white flex items-center gap-1"
+                      onClick={handleDeleteSelectedCategories}
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        padding: '6px 12px',
+                        borderRadius: 'var(--r-sm)',
+                        background: 'var(--danger)',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: '#fff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4,
+                      }}
                     >
-                      <Trash2 size={12} /> Delete
+                      Delete
                     </button>
                   )}
                   <button
-                    type="button"
                     onClick={() => {
                       if (selectedCategoryIds.size > 0) {
                         setSelectedCategoryIds(new Set());
                       } else {
-                        setSelectedCategoryIds(new Set(categories.filter(category => !isProtectedCategory(category)).map(category => category.id)));
+                        setSelectedCategoryIds(new Set(listCategories.map(c => c.id)));
                       }
                     }}
-                    className="cursor-pointer text-xs font-semibold px-3 py-1.5 rounded-md bg-zinc-200 dark:bg-zinc-800"
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      padding: '6px 12px',
+                      borderRadius: 'var(--r-sm)',
+                      background: 'var(--surface-2)',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: 'var(--text)',
+                    }}
                   >
                     {selectedCategoryIds.size > 0 ? 'Deselect All' : 'Select All'}
                   </button>
                   <button
-                    type="button"
-                    onClick={() => setIsAddCatModalOpen(true)}
-                    className="cursor-pointer text-zinc-900 dark:text-white font-semibold text-sm flex items-center gap-1 bg-zinc-200 dark:bg-zinc-800 px-3 py-1.5 rounded-md"
+                    onClick={() => setShowAddCat(true)}
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      padding: '6px 12px',
+                      borderRadius: 'var(--r-sm)',
+                      background: 'var(--surface-2)',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: 'var(--text)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
                   >
-                    <Plus size={14} /> Add
+                    + Add
                   </button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-2">
-                {categories.map(cat => (
-                  <div 
-                    key={cat.id} 
-                    className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer transition-all ${
-                      selectedCategoryIds.has(cat.id) 
-                        ? 'bg-zinc-100 dark:bg-zinc-800 border-zinc-400 dark:border-zinc-600' 
-                        : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
-                    }`}
-                    onClick={() => {
-                      if (!isProtectedCategory(cat)) {
-                        toggleCategorySelection(cat.id);
-                      }
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {listCategories.map(cat => (
+                  <div
+                    key={cat.id}
+                    onClick={() => toggleCategorySelection(cat.id)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: 12,
+                      border: `1px solid ${selectedCategoryIds.has(cat.id) ? 'var(--text-2)' : 'var(--border)'}`,
+                      borderRadius: 'var(--r-md)',
+                      cursor: 'pointer',
+                      background: selectedCategoryIds.has(cat.id) ? 'var(--surface-2)' : 'var(--surface)',
+                      transition: 'all 0.15s',
                     }}
                   >
-                    <div className="flex items-center gap-3">
-                      {isProtectedCategory(cat) ? (
-                        <div className="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                          Default
-                        </div>
-                      ) : (
-                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                          selectedCategoryIds.has(cat.id) 
-                            ? 'bg-zinc-800 dark:bg-white border-zinc-800 dark:border-white' 
-                            : 'border-zinc-300 dark:border-zinc-600'
-                        }`}>
-                          {selectedCategoryIds.has(cat.id) && (
-                            <Check size={10} className={selectedCategoryIds.has(cat.id) ? 'text-white dark:text-zinc-900' : ''} />
-                          )}
-                        </div>
-                      )}
-                      <div className={`w-3 h-3 rounded-sm ${colorClasses[cat.color ?? 'gray'].bg}`} />
-                      <span className="font-medium text-sm">{cat.name}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{
+                        width: 16,
+                        height: 16,
+                        borderRadius: 3,
+                        border: `2px solid ${selectedCategoryIds.has(cat.id) ? 'var(--text)' : 'var(--border)'}`,
+                        background: selectedCategoryIds.has(cat.id) ? 'var(--text)' : 'transparent',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                        {selectedCategoryIds.has(cat.id) && (
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--bg)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        )}
+                      </div>
+                      <div style={{
+                        width: 12,
+                        height: 12,
+                        borderRadius: 3,
+                        background: catDot(cat.color ?? 'gray'),
+                      }} />
+                      <span style={{ fontWeight: 500, fontSize: 14 }}>{cat.name}</span>
                     </div>
-                    {!isProtectedCategory(cat) && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteCategory(cat.id);
-                        }}
-                        className="cursor-pointer p-1.5 text-zinc-400 hover:text-red-500 transition-colors"
-                        aria-label={`Delete ${cat.name} category`}
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    )}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDeleteCategory(cat.id); }}
+                      style={{
+                        padding: 6,
+                        color: 'var(--text-2)',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                      }}
+                      aria-label={`Delete ${cat.name} category`}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      </svg>
+                    </button>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {activeTab === 'teaser' && <TeaserView />}
-
+          {activeTab === 'pro' && (
+            <div style={{ padding: '40px 14px', textAlign: 'center', opacity: 0.5 }}>
+              <p style={{ fontSize: 16, fontWeight: 600 }}>Pro features coming soon</p>
+              <p style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 8 }}>Shared lists, smart suggestions, and more.</p>
+            </div>
+          )}
         </main>
 
-        {activeTab === 'list' && (
-          <button
-            type="button"
-            onClick={() => setIsAddModalOpen(true)}
-            className="cursor-pointer fixed bottom-24 right-6 w-14 h-14 bg-gradient-to-br from-zinc-800 to-zinc-950 dark:from-white dark:to-zinc-200 text-white dark:text-zinc-900 rounded-full shadow-xl shadow-zinc-900/20 dark:shadow-white/20 flex items-center justify-center active:scale-90 transition-all z-30 hover:scale-105"
-            aria-label="Add new item"
-          >
-            <Plus size={28} strokeWidth={2.5} />
-          </button>
+        {activeTab === 'list' && currentListId && (
+          <BottomInputBar
+            lists={lists.map(l => ({ id: l.id, name: l.name ?? '' }))}
+            currentListId={currentListId}
+            categories={listCategories.map(c => ({ id: c.id, name: c.name ?? '', color: c.color ?? 'gray' }))}
+            isDark={isDark}
+            onAddItem={handleAddItem}
+            onAddCategory={handleAddCategory}
+            selectionMode={selectionMode}
+          />
         )}
 
-        <nav className="fixed bottom-0 w-full bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-900 pb-safe z-40">
-          <div className="flex items-center justify-around p-1 pb-5 pt-2 max-w-md mx-auto">
-            <button
-              type="button"
-              onClick={() => setActiveTab('list')}
-              className={`cursor-pointer flex flex-col items-center gap-1 p-2 w-20 transition-colors ${activeTab === 'list' ? 'text-zinc-900 dark:text-white' : 'text-zinc-400 dark:text-zinc-600 hover:text-zinc-600 dark:hover:text-zinc-400'}`}
-            >
-              <ListTodo size={20} />
-              <span className="text-[10px] font-semibold tracking-wide">List</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('categories')}
-              className={`cursor-pointer flex flex-col items-center gap-1 p-2 w-20 transition-colors ${activeTab === 'categories' ? 'text-zinc-900 dark:text-white' : 'text-zinc-400 dark:text-zinc-600 hover:text-zinc-600 dark:hover:text-zinc-400'}`}
-            >
-              <Tag size={20} />
-              <span className="text-[10px] font-semibold tracking-wide">Categories</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('teaser')}
-              className={`cursor-pointer flex flex-col items-center gap-1 p-2 w-20 transition-colors ${activeTab === 'teaser' ? 'text-zinc-900 dark:text-white' : 'text-zinc-400 dark:text-zinc-600 hover:text-zinc-600 dark:hover:text-zinc-400'}`}
-            >
-              <Share2 size={20} />
-              <span className="text-[10px] font-semibold tracking-wide">Pro</span>
-            </button>
-          </div>
-        </nav>
+        <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
 
-        {isAddModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center p-4 bg-zinc-900/20 dark:bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-xl p-5 shadow-2xl border border-zinc-200 dark:border-zinc-800 animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 sm:zoom-in-95">
-              <div className="flex justify-between items-center mb-5">
-                <h3 className="text-lg font-bold">New Item</h3>
-                <button
-                  type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="p-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-md text-zinc-500"
-                  aria-label="Close add item dialog"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-              <form onSubmit={handleAddItem} className="space-y-4">
-                <div>
-                  <input
-                    type="text"
-                    autoFocus
-                    placeholder="e.g. Organic Bananas"
-                    value={newItemName}
-                    onChange={e => setNewItemName(e.target.value)}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-3 text-sm outline-none focus:border-zinc-400 dark:focus:border-zinc-600 transition-all placeholder:text-zinc-400"
-                  />
-                </div>
-
-                <div className="flex gap-3">
-                  <div className="flex-1">
-                    <label htmlFor="new-item-category" className="block text-[10px] font-semibold text-zinc-500 mb-1.5 uppercase tracking-wider">Category</label>
-                    <select
-                      id="new-item-category"
-                      value={newItemCat}
-                      onChange={e => setNewItemCat(e.target.value)}
-                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-zinc-400 appearance-none"
-                    >
-                      {categories.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="w-24">
-                    <label className="block text-[10px] font-semibold text-zinc-500 mb-1.5 uppercase tracking-wider">Qty</label>
-                    <div className="flex items-center bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden h-[42px]">
-                      <button type="button" onClick={() => setNewItemQty(Math.max(1, newItemQty - 1))} className="px-2.5 text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800 h-full">-</button>
-                      <span className="flex-1 text-center text-sm font-semibold">{newItemQty}</span>
-                      <button type="button" onClick={() => setNewItemQty(newItemQty + 1)} className="px-2.5 text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800 h-full">+</button>
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={!newItemName.trim() || !newItemCat}
-                  className="w-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-bold py-3 rounded-lg mt-2 active:scale-[0.98] transition-transform disabled:opacity-50"
-                >
-                  Save Item
-                </button>
-              </form>
-            </div>
-          </div>
+        {showLists && (
+          <MyListsPanel
+            lists={lists.map(l => ({
+              id: l.id,
+              name: l.name ?? '',
+              itemCount: items.filter(i => i.listId === l.id).length,
+            }))}
+            currentListId={currentListId ?? ''}
+            onSelectList={(id) => { setCurrentListId(id); setShowLists(false); setSelectedCategory(null); }}
+            onClose={() => setShowLists(false)}
+            onAddList={handleAddList}
+          />
         )}
 
-        {isEditModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center p-4 bg-zinc-900/20 dark:bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-xl p-5 shadow-2xl border border-zinc-200 dark:border-zinc-800 animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 sm:zoom-in-95">
-              <div className="flex justify-between items-center mb-5">
-                <h3 className="text-lg font-bold">Edit Item</h3>
-                <button
-                  type="button"
-                  onClick={() => setIsEditModalOpen(false)}
-                  className="p-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-md text-zinc-500"
-                  aria-label="Close edit item dialog"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-              <form onSubmit={handleUpdateItem} className="space-y-4">
-                <div>
-                  <input
-                    type="text"
-                    autoFocus
-                    placeholder="e.g. Organic Bananas"
-                    value={editItemName}
-                    onChange={e => setEditItemName(e.target.value)}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-3 text-sm outline-none focus:border-zinc-400 dark:focus:border-zinc-600 transition-all placeholder:text-zinc-400"
-                  />
-                </div>
-
-                <div className="flex gap-3">
-                  <div className="flex-1">
-                    <label htmlFor="edit-item-category" className="block text-[10px] font-semibold text-zinc-500 mb-1.5 uppercase tracking-wider">Category</label>
-                    <select
-                      id="edit-item-category"
-                      value={editItemCat}
-                      onChange={e => setEditItemCat(e.target.value)}
-                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-zinc-400 appearance-none"
-                    >
-                      {categories.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="w-24">
-                    <label className="block text-[10px] font-semibold text-zinc-500 mb-1.5 uppercase tracking-wider">Qty</label>
-                    <div className="flex items-center bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden h-10.5]">
-                      <button type="button" onClick={() => setEditItemQty(Math.max(1, editItemQty - 1))} className="px-2.5 text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800 h-full">-</button>
-                      <span className="flex-1 text-center text-sm font-semibold">{editItemQty}</span>
-                      <button type="button" onClick={() => setEditItemQty(editItemQty + 1)} className="px-2.5 text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800 h-full">+</button>
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={!editItemName.trim() || !editItemCat}
-                  className="w-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-bold py-3 rounded-lg mt-2 active:scale-[0.98] transition-transform disabled:opacity-50"
-                >
-                  Update Item
-                </button>
-              </form>
-            </div>
-          </div>
+        {showShare && (
+          <ShareModal
+            listName={currentListName}
+            onClose={() => setShowShare(false)}
+          />
         )}
 
-        {isAddCatModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center p-4 bg-zinc-900/20 dark:bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-xl p-5 shadow-2xl border border-zinc-200 dark:border-zinc-800 animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 sm:zoom-in-95">
-              <div className="flex justify-between items-center mb-5">
-                <h3 className="text-lg font-bold">New Category</h3>
-                <button
-                  type="button"
-                  onClick={() => setIsAddCatModalOpen(false)}
-                  className="p-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-md text-zinc-500"
-                  aria-label="Close add category dialog"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-              <form onSubmit={handleAddCategory} className="space-y-4">
-                <div>
-                  <input
-                    type="text"
-                    autoFocus
-                    placeholder="e.g. Frozen Foods"
-                    value={newCatName}
-                    onChange={e => setNewCatName(e.target.value)}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-3 text-sm outline-none focus:border-zinc-400 transition-all placeholder:text-zinc-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-semibold text-zinc-500 mb-2 uppercase tracking-wider">Color Tag</label>
-                  <div className="flex flex-wrap gap-2.5">
-                    {AVAILABLE_COLORS.map(color => (
-                      <button
-                        key={color}
-                        type="button"
-                        onClick={() => setNewCatColor(color)}
-                        className={`w-8 h-8 rounded-md ${colorClasses[color].bg} flex items-center justify-center transition-transform ${newCatColor === color ? 'scale-110 ring-2 ring-offset-2 ring-zinc-900 dark:ring-white dark:ring-offset-zinc-900' : 'scale-100'}`}
-                        aria-label={`Choose ${color} category color`}
-                      >
-                        {newCatColor === color && (
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                          </svg>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={!newCatName.trim()}
-                  className="w-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-bold py-3 rounded-lg mt-2 active:scale-[0.98] transition-transform disabled:opacity-50"
-                >
-                  Create Category
-                </button>
-              </form>
-            </div>
-          </div>
+        {showAddCat && (
+          <AddCategoryModal
+            isDark={isDark}
+            onAdd={handleAddCategory}
+            onClose={() => setShowAddCat(false)}
+          />
         )}
 
-        {isDeleteConfirmOpen && deleteConfirmData && (
-          <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center p-4 bg-zinc-900/20 dark:bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-xl p-5 shadow-2xl border border-zinc-200 dark:border-zinc-800 animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 sm:zoom-in-95">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-bold">Confirm Delete</h3>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsDeleteConfirmOpen(false);
-                    setDeleteConfirmData(null);
-                  }}
-                  className="p-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-md text-zinc-500"
-                  aria-label="Close delete confirmation dialog"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6">
-                {deleteConfirmData.type === 'items' 
-                  ? `Are you sure you want to delete ${deleteConfirmData.count} item${deleteConfirmData.count > 1 ? 's' : ''}? This action cannot be undone.`
-                  : deleteConfirmData.type === 'categories'
-                  ? `Are you sure you want to delete ${deleteConfirmData.count} categor${deleteConfirmData.count > 1 ? 'ies' : 'y'}? Items assigned to them will also be deleted.`
-                  : deleteConfirmData.type === 'category'
-                  ? `Are you sure you want to delete the category "${deleteConfirmData.name}"? Items assigned to it will also be deleted.`
-                  : `Are you sure you want to delete "${deleteConfirmData.name}"? This action cannot be undone.`
-                }
-              </p>
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsDeleteConfirmOpen(false);
-                    setDeleteConfirmData(null);
-                  }}
-                  className="flex-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-sm font-semibold py-3 rounded-lg"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (deleteConfirmData.type === 'items') {
-                      const ids = deleteConfirmData.ids || [];
-                      setItems(prev => prev.filter(item => !ids.includes(item.id)));
-                      await Promise.all(ids.map(id => client.models.ListItem.delete({ id })));
-                    } else if (deleteConfirmData.type === 'categories') {
-                      const ids = deleteConfirmData.ids || [];
-                      setCategories(prev => prev.filter(category => !ids.includes(category.id)));
-                      setItems(prev => prev.filter(item => !ids.includes(item.categoryId ?? '')));
-                      if (selectedCategory && ids.includes(selectedCategory)) {
-                        setSelectedCategory(null);
-                      }
-                      await Promise.all(ids.map(id => client.models.Category.delete({ id })));
-                    } else if (deleteConfirmData.type === 'category') {
-                      const categoryId = deleteConfirmData.ids?.[0];
-                      if (categoryId) {
-                        setCategories(prev => prev.filter(category => category.id !== categoryId));
-                        setItems(prev => prev.filter(item => item.categoryId !== categoryId));
-                        if (selectedCategory === categoryId) {
-                          setSelectedCategory(null);
-                        }
-                        setSelectedCategoryIds(prev => {
-                          const next = new Set(prev);
-                          next.delete(categoryId);
-                          return next;
-                        });
-                        await client.models.Category.delete({ id: categoryId });
-                      }
-                    } else {
-                      const itemId = deleteConfirmData.ids?.[0];
-                      if (itemId) {
-                        setItems(prev => prev.filter(item => item.id !== itemId));
-                        setSelectedItemIds(prev => {
-                          const next = new Set(prev);
-                          next.delete(itemId);
-                          return next;
-                        });
-                        await client.models.ListItem.delete({ id: itemId });
-                      }
-                    }
-                    if (deleteConfirmData.type === 'items') {
-                      setSelectedItemIds(new Set());
-                      setIsItemSelectionMode(false);
-                    }
-                    if (deleteConfirmData.type === 'categories') {
-                      setSelectedCategoryIds(new Set());
-                    }
-                    setIsDeleteConfirmOpen(false);
-                    setDeleteConfirmData(null);
-                  }}
-                  className="flex-1 bg-red-500 text-white text-sm font-semibold py-3 rounded-lg"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
+        {deleteConfirm && (
+          <ConfirmModal
+            message={deleteConfirm.message}
+            onConfirm={deleteConfirm.onConfirm}
+            onCancel={() => setDeleteConfirm(null)}
+          />
         )}
 
+        {detailItem && (
+          <ItemDetailPanel
+            item={{
+              id: detailItem.id,
+              name: detailItem.name ?? '',
+              isCompleted: detailItem.isCompleted ?? false,
+              priority: detailItem.priority ?? false,
+              quantity: detailItem.quantity ?? 1,
+              notes: detailItem.notes ?? '',
+              subtasks: Array.isArray(detailItem.subtasks) ? detailItem.subtasks : [],
+              attachments: Array.isArray(detailItem.attachments) ? detailItem.attachments : [],
+              categoryId: detailItem.categoryId ?? null,
+            }}
+            categories={listCategories.map(c => ({ id: c.id, name: c.name ?? '', color: c.color ?? 'gray' }))}
+            listName={currentListName}
+            isDark={isDark}
+            onClose={() => setDetailItemId(null)}
+            onUpdateName={(id, name) => updateItem(id, { name })}
+            onUpdateNotes={(id, notes) => updateItem(id, { notes })}
+            onToggleComplete={(id) => {
+              const item = items.find(i => i.id === id);
+              if (item) toggleItem(id, item.isCompleted ?? false);
+            }}
+            onToggleSubtask={handleToggleSubtask}
+            onAddSubtask={handleAddSubtask}
+            onDeleteSubtask={handleDeleteSubtask}
+            onDelete={(id) => { setDetailItemId(null); handleDeleteItem(id); }}
+          />
+        )}
       </div>
-
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        
-        body {
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-        
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
-      `}</style>
     </ThemeContext.Provider>
   );
 }

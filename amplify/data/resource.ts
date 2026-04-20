@@ -1,10 +1,19 @@
 import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
 
 const schema = a.schema({
+  ShoppingList: a
+    .model({
+      name: a.string().required(),
+      userKey: a.string().required(),
+      sortOrder: a.integer(),
+    })
+    .authorization((allow) => [allow.publicApiKey()]),
+
   Category: a
     .model({
       name: a.string(),
       color: a.string(),
+      listId: a.string(),
     })
     .authorization((allow) => [allow.publicApiKey()]),
 
@@ -12,9 +21,14 @@ const schema = a.schema({
     .model({
       name: a.string(),
       categoryId: a.string(),
+      listId: a.string(),
       isCompleted: a.boolean(),
       quantity: a.integer(),
       sortOrder: a.integer(),
+      priority: a.boolean().default(false),
+      notes: a.string(),
+      subtasks: a.json(),
+      attachments: a.json(),
     })
     .authorization((allow) => [allow.publicApiKey()]),
 

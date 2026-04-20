@@ -34,3 +34,19 @@ amplifyconfiguration*
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Opencode
+.opencode/  
+
+# sisyphus
+.sisyphus/
+
+# agent
+.agent/
+.gemini/
+.cursor/
+.codex/
+.claude/
+.github/        
+.
+

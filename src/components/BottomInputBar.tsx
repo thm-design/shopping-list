@@ -1,0 +1,281 @@
+import { useState } from 'react';
+import { Plus, ArrowRight } from 'lucide-react';
+import { catDot, catBg, catText, CAT_COLOR_NAMES, type CatColorName } from '../lib/categoryColors';
+import { NAV_H } from './BottomNav';
+
+interface BottomInputBarProps {
+  lists: { id: string; name: string }[];
+  currentListId: string;
+  categories: { id: string; name: string; color: string }[];
+  isDark: boolean;
+  onAddItem: (name: string, listId: string, categoryId: string | null) => void;
+  onAddCategory: (name: string, color: CatColorName) => void;
+  selectionMode: boolean;
+}
+
+export function BottomInputBar({
+  lists,
+  currentListId,
+  categories,
+  isDark,
+  onAddItem,
+  onAddCategory,
+  selectionMode,
+}: BottomInputBarProps) {
+  const [text, setText] = useState('');
+  const [focused, setFocused] = useState(false);
+  const [selectedListId, setSelectedListId] = useState(currentListId);
+  const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
+  const [showAddCat, setShowAddCat] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [newCatColor, setNewCatColor] = useState<CatColorName>('gray');
+
+  if (selectionMode) return null;
+
+  const handleSubmit = () => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    onAddItem(trimmed, selectedListId, selectedCatId);
+    setText('');
+  };
+
+  const handleAddCategory = () => {
+    const trimmed = newCatName.trim();
+    if (!trimmed) return;
+    onAddCategory(trimmed, newCatColor);
+    setNewCatName('');
+    setNewCatColor('gray');
+    setShowAddCat(false);
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        bottom: NAV_H + 10,
+        left: 12,
+        right: 12,
+        zIndex: 40,
+      }}
+    >
+      {/* Expansion panel */}
+      {focused && (
+        <div
+          style={{
+            background: 'var(--surface)',
+            borderRadius: 'var(--r-lg)',
+            border: '1px solid var(--border)',
+            boxShadow: '0 4px 20px oklch(0% 0 0 / 0.10)',
+            marginBottom: 8,
+            padding: '12px 14px',
+            animation: 'slideUp 0.18s ease-out',
+          }}
+        >
+          {/* List picker */}
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: 'var(--text-2)', marginBottom: 6 }}>
+              Add to list
+            </div>
+            {lists.map((list) => {
+              const isActive = list.id === selectedListId;
+              return (
+                <button
+                  key={list.id}
+                  onClick={() => setSelectedListId(list.id)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: 'var(--r-sm)',
+                    background: isActive ? 'var(--accent-bg)' : 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                  }}
+                >
+                  <div style={{
+                    width: 18,
+                    height: 18,
+                    borderRadius: '50%',
+                    border: isActive ? 'none' : '1.5px solid var(--border)',
+                    background: isActive ? 'var(--accent)' : 'transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}>
+                    {isActive && <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff' }} />}
+                  </div>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: isActive ? 'var(--accent-fg)' : 'var(--text)' }}>
+                    {list.name}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Category picker */}
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: 'var(--text-2)', marginBottom: 6 }}>
+              Category
+            </div>
+            {categories.length === 0 && !showAddCat ? (
+              <div style={{ fontStyle: 'italic', fontSize: 12, color: 'var(--text-2)' }}>
+                No categories
+              </div>
+            ) : showAddCat ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <input
+                  type="text"
+                  value={newCatName}
+                  onChange={(e) => setNewCatName(e.target.value)}
+                  placeholder="Category name"
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleAddCategory(); if (e.key === 'Escape') setShowAddCat(false); }}
+                  autoFocus
+                  style={{
+                    fontSize: 12,
+                    padding: '4px 8px',
+                    background: 'var(--surface-2)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--r-sm)',
+                    color: 'var(--text)',
+                    outline: 'none',
+                    width: 120,
+                  }}
+                />
+                {CAT_COLOR_NAMES.slice(0, 7).map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setNewCatColor(c)}
+                    style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: '50%',
+                      background: catDot(c),
+                      border: newCatColor === c ? '2.5px solid var(--text)' : '2.5px solid transparent',
+                      cursor: 'pointer',
+                    }}
+                  />
+                ))}
+                <button onClick={handleAddCategory} style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer' }}>Add</button>
+                <button onClick={() => setShowAddCat(false)} style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)', background: 'var(--surface-2)', border: 'none', borderRadius: 'var(--r-xs)', padding: '2px 8px', cursor: 'pointer' }}>✕</button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {categories.map((cat) => {
+                  const isActive = selectedCatId === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => setSelectedCatId(isActive ? null : cat.id)}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: 'var(--r-full)',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        background: isActive ? catDot(cat.color) : catBg(cat.color, isDark),
+                        color: isActive ? '#fff' : catText(cat.color, isDark),
+                        transition: 'background 0.15s, color 0.15s',
+                      }}
+                    >
+                      {cat.name}
+                    </button>
+                  );
+                })}
+                <button
+                  onClick={() => setShowAddCat(true)}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: 'var(--r-full)',
+                    border: '1.5px dashed var(--border)',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: 'var(--text-2)',
+                  }}
+                >
+                  + Add
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Input bar */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '10px 12px',
+          background: 'var(--surface)',
+          borderRadius: 'var(--r-lg)',
+          border: '1px solid var(--border)',
+          boxShadow: '0 4px 20px oklch(0% 0 0 / 0.10)',
+        }}
+      >
+        <button
+          onClick={() => setFocused(true)}
+          style={{
+            width: 32,
+            height: 32,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 'var(--r-sm)',
+            background: 'var(--accent)',
+            border: 'none',
+            cursor: 'pointer',
+            color: '#fff',
+            flexShrink: 0,
+          }}
+        >
+          <Plus size={18} />
+        </button>
+
+        <input
+          type="text"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit(); }}
+          placeholder="Add an item..."
+          style={{
+            flex: 1,
+            fontSize: 15,
+            background: 'transparent',
+            border: 'none',
+            outline: 'none',
+            color: 'var(--text)',
+          }}
+        />
+
+        <button
+          onClick={handleSubmit}
+          style={{
+            width: 32,
+            height: 32,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 'var(--r-sm)',
+            background: text.trim() ? 'var(--accent)' : 'var(--surface-2)',
+            border: 'none',
+            cursor: text.trim() ? 'pointer' : 'default',
+            color: text.trim() ? '#fff' : 'var(--text-2)',
+            transition: 'background 0.15s',
+            flexShrink: 0,
+          }}
+        >
+          <ArrowRight size={18} />
+        </button>
+      </div>
+    </div>
+  );
+}
