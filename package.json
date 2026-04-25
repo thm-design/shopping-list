@@ -1,8 +1,11 @@
 {
-  "name": "amplify-vite-react-template",
+  "name": "airlist",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.1.0",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -19,9 +22,17 @@
     "react": "~18.3.1",
     "react-dom": "~18.3.1"
   },
-  "engines": {
-    "node": ">= 22.12.0",
-    "npm": ">= 10.8.0"
+  "overrides": {
+    "follow-redirects": "^1.16.0",
+    "glob": "^13.0.6",
+    "axios": "^1.15.2",
+    "immutable": "^3.8.3",
+    "js-yaml": "^4.1.1",
+    "picomatch": "^4.0.4",
+    "tmp": "^0.2.4",
+    "undici": "^8.1.0",
+    "fast-xml-parser": "^5.7.1",
+    "strnum": "^1.0.0"
   },
   "devDependencies": {
     "@aws-amplify/backend": "^1.22.0",
@@ -51,12 +62,5 @@
     "tsx": "^4.21.0",
     "typescript": "~5.9.3",
     "vite": "~7.3.1"
-  },
-  "overrides": {
-    "handlebars": "^4.7.8",
-    "lodash": "^4.17.21",
-    "immutable": "^3.8.3",
-    "glob": "^11.1.0",
-    "core-js": "^3.49.0"
   }
 }
