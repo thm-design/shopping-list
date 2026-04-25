@@ -4,14 +4,14 @@ backend:
     build:
       commands:
         - nvm use 22
-        - npm ci --legacy-peer-deps --cache .npm --prefer-offline
+        - npm ci --legacy-peer-deps --cache .npm
         - npx ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
 frontend:
   phases:
     preBuild:
       commands:
         - nvm use 22
-        - npm ci --legacy-peer-deps --cache .npm --prefer-offline
+        - npm ci --legacy-peer-deps --cache .npm
     build:
       commands:
         - npm run build
