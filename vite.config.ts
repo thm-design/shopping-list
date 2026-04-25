@@ -19,10 +19,7 @@ export default defineConfig({
         manualChunks: {
           'react-vendor': ['react', 'react-dom'],
           'amplify-vendor': ['aws-amplify', '@aws-amplify/ui-react'],
-          'analytics-vendor': ['posthog-js'],
-          'ui-vendor': ['motion', 'react-icons'],
-          'utils-vendor': ['dompurify', 'zod'],
-          'three-vendor': ['three', '@react-three/fiber'],
+          'lucide-vendor': ['lucide-react'],
         },
       },
     },
