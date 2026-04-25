@@ -51,6 +51,7 @@
     "autoprefixer": "^10.4.27",
     "aws-cdk": "^2.181.1",
     "aws-cdk-lib": "^2.181.1",
+    "constructs": "^10.0.0",
     "esbuild": "~0.27.2",
     "eslint": "~9.39.2",
     "eslint-plugin-react-hooks": "~7.0.1",
