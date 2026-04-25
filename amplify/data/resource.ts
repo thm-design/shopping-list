@@ -7,7 +7,7 @@ const schema = a.schema({
       userKey: a.string().required(),
       sortOrder: a.integer(),
     })
-    .authorization((allow) => [allow.publicApiKey()]),
+    .authorization((allow) => [allow.publicApiKey(), allow.guest(), allow.authenticated()]),
 
   Category: a
     .model({
@@ -15,7 +15,7 @@ const schema = a.schema({
       color: a.string(),
       listId: a.string(),
     })
-    .authorization((allow) => [allow.publicApiKey()]),
+    .authorization((allow) => [allow.publicApiKey(), allow.guest(), allow.authenticated()]),
 
   ListItem: a
     .model({
@@ -30,7 +30,7 @@ const schema = a.schema({
       subtasks: a.json(),
       attachments: a.json(),
     })
-    .authorization((allow) => [allow.publicApiKey()]),
+    .authorization((allow) => [allow.publicApiKey(), allow.guest(), allow.authenticated()]),
 
   UserPreference: a
     .model({
@@ -38,7 +38,7 @@ const schema = a.schema({
       theme: a.string(),
       sortMode: a.string(),
     })
-    .authorization((allow) => [allow.publicApiKey()]),
+    .authorization((allow) => [allow.publicApiKey(), allow.guest(), allow.authenticated()]),
 });
 
 export type Schema = ClientSchema<typeof schema>;

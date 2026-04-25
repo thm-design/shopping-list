@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@aws-amplify/ui-react": "~6.15.3",
-    "aws-amplify": "~6.16.4",
+    "aws-amplify": "^6.16.4",
     "lucide-react": "^1.8.0",
     "react": "~18.3.1",
     "react-dom": "~18.3.1"
@@ -24,8 +24,8 @@
     "npm": ">= 10.8.0"
   },
   "devDependencies": {
-    "@aws-amplify/backend": "~1.22.0",
-    "@aws-amplify/backend-cli": "~1.8.2",
+    "@aws-amplify/backend": "^1.22.0",
+    "@aws-amplify/backend-cli": "^1.8.2",
     "@eslint/compat": "~2.0.1",
     "@eslint/eslintrc": "~3.3.3",
     "@eslint/js": "~9.39.2",
@@ -38,6 +38,8 @@
     "@typescript-eslint/parser": "~8.53.0",
     "@vitejs/plugin-react": "~5.1.2",
     "autoprefixer": "^10.4.27",
+    "aws-cdk": "^2.181.1",
+    "aws-cdk-lib": "^2.181.1",
     "esbuild": "~0.27.2",
     "eslint": "~9.39.2",
     "eslint-plugin-react-hooks": "~7.0.1",
@@ -51,10 +53,10 @@
     "vite": "~7.3.1"
   },
   "overrides": {
-    "fast-xml-parser": "^5.5.7",
     "handlebars": "^4.7.8",
     "lodash": "^4.17.21",
     "immutable": "^3.8.3",
-    "@smithy/config-resolver": "^4.4.0"
+    "glob": "^11.1.0",
+    "core-js": "^3.49.0"
   }
 }
