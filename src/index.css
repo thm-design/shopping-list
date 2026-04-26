@@ -4,10 +4,10 @@
 /* ── Design tokens (oklch color system) ── */
 :root {
   /* Surface & background */
-  --bg:        oklch(98.5% 0.004 240);
+  --bg:        oklch(97% 0.005 240);
   --surface:   oklch(100% 0 0);
-  --surface-2: oklch(96.5% 0.005 240);
-  --border:    oklch(91% 0.008 240);
+  --surface-2: oklch(94% 0.008 240);
+  --border:    oklch(90% 0.01 240);
 
   /* Text */
   --text:      oklch(14% 0.012 240);
@@ -43,10 +43,10 @@
 
 /* ── Dark mode overrides ── */
 .dark {
-  --bg:        oklch(9% 0.006 240);
-  --surface:   oklch(13% 0.008 240);
-  --surface-2: oklch(18% 0.008 240);
-  --border:    oklch(24% 0.009 240);
+  --bg:        oklch(8% 0.006 240);
+  --surface:   oklch(15% 0.01 240);
+  --surface-2: oklch(20% 0.01 240);
+  --border:    oklch(26% 0.012 240);
   --text:      oklch(96% 0.004 240);
   --text-2:    oklch(62% 0.012 240);
   --accent:    oklch(65% 0.18 245);

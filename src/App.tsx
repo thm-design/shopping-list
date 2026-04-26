@@ -695,7 +695,7 @@ function AppImpl() {
 
         <main style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }} className="custom-scrollbar">
           {activeTab === 'list' && (
-            <div style={{ padding: '0 14px', paddingBottom: 160 }}>
+            <div style={{ padding: '0 14px', paddingBottom: 160, display: 'flex', flexDirection: 'column', gap: 8 }}>
               {selectionMode && (
                 <div style={{
                   display: 'flex',
