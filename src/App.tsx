@@ -2,6 +2,25 @@ import { useState, useEffect, useMemo, useCallback, createContext } from 'react'
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "../amplify/data/resource";
 
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragOverlay,
+  type DragStartEvent,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { restrictToVerticalAxis, restrictToWindowEdges } from '@dnd-kit/modifiers';
+
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SplashScreen } from './components/SplashScreen';
 import { Header } from './components/Header';
@@ -47,7 +66,18 @@ function AppImpl() {
     if (typeof window === 'undefined') return null;
     return window.localStorage.getItem(CURRENT_LIST_STORAGE_KEY);
   });
-  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window === 'undefined') return 'light';
@@ -598,25 +628,40 @@ function AppImpl() {
     });
   };
 
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    setActiveId(active.id as string);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      handleReorder(active.id as string, over?.id as string);
+    }
+
+    setActiveId(null);
+  };
+
   const handleReorder = async (sourceId: string, targetId: string) => {
     if (sortMode !== 'custom') handleSortModeChange('custom');
-    const newItems = [...listItems];
-    const sourceIndex = newItems.findIndex(i => i.id === sourceId);
-    const targetIndex = newItems.findIndex(i => i.id === targetId);
+    
+    const sourceIndex = listItems.findIndex(i => i.id === sourceId);
+    const targetIndex = listItems.findIndex(i => i.id === targetId);
+    
     if (sourceIndex === -1 || targetIndex === -1) return;
 
-    const [movedItem] = newItems.splice(sourceIndex, 1);
-    newItems.splice(targetIndex, 0, movedItem);
+    const newItemsOrder = arrayMove(listItems, sourceIndex, targetIndex);
+    const updatedItems = newItemsOrder.map((item, index) => ({ ...item, sortOrder: index }));
 
-    const updatedItems = newItems.map((item, index) => ({ ...item, sortOrder: index }));
-    setItems(prev => prev.map(item => {
-      const updated = updatedItems.find(u => u.id === item.id);
-      return updated ? { ...item, sortOrder: updated.sortOrder } : item;
-    }));
-
-    updatedItems.forEach(item => {
-      client.models.ListItem.update({ id: item.id, sortOrder: item.sortOrder });
+    setItems(prev => {
+      const otherListItems = prev.filter(i => i.listId !== currentListId);
+      return [...otherListItems, ...updatedItems];
     });
+
+    await Promise.all(
+      updatedItems.map(item => client.models.ListItem.update({ id: item.id, sortOrder: item.sortOrder }))
+    );
   };
 
   const handleToggleSubtask = async (itemId: string, subtaskId: string) => {
@@ -695,139 +740,175 @@ function AppImpl() {
 
         <main style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }} className="custom-scrollbar">
           {activeTab === 'list' && (
-            <div style={{ padding: '0 14px', paddingBottom: 160, display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {selectionMode && (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '8px 0',
-                  position: 'sticky',
-                  top: 0,
-                  background: 'var(--bg)',
-                  zIndex: 10,
-                }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)' }}>
-                    {selectedIds.size} selected
-                  </span>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button
-                      onClick={() => {
-                        const allIds = filteredItems.map(i => i.id);
-                        const allSelected = allIds.length > 0 && allIds.every(id => selectedIds.has(id));
-                        if (allSelected) {
-                          setSelectedIds(new Set());
-                        } else {
-                          setSelectedIds(new Set(allIds));
-                        }
-                      }}
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 600,
-                        padding: '6px 12px',
-                        borderRadius: 'var(--r-sm)',
-                        background: 'var(--surface-2)',
-                        border: 'none',
-                        cursor: 'pointer',
-                        color: 'var(--text)',
-                      }}
-                    >
-                      {filteredItems.length > 0 && selectedIds.size >= filteredItems.length ? 'Deselect All' : 'Select All'}
-                    </button>
-                    <button
-                      onClick={handleDeleteSelectedItems}
-                      disabled={selectedIds.size === 0}
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 600,
-                        padding: '6px 12px',
-                        borderRadius: 'var(--r-sm)',
-                        background: 'var(--danger)',
-                        border: 'none',
-                        cursor: selectedIds.size === 0 ? 'not-allowed' : 'pointer',
-                        color: '#fff',
-                        opacity: selectedIds.size === 0 ? 0.5 : 1,
-                      }}
-                    >
-                      Delete
-                    </button>
-                    <button
-                      onClick={() => { setSelectionMode(false); setSelectedIds(new Set()); }}
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 600,
-                        padding: '6px 12px',
-                        borderRadius: 'var(--r-sm)',
-                        background: 'var(--surface-2)',
-                        border: 'none',
-                        cursor: 'pointer',
-                        color: 'var(--text)',
-                      }}
-                    >
-                      Cancel
-                    </button>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              modifiers={[restrictToVerticalAxis, restrictToWindowEdges]}
+            >
+              <div style={{ padding: '0 14px', paddingBottom: 160, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {selectionMode && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '8px 0',
+                    position: 'sticky',
+                    top: 0,
+                    background: 'var(--bg)',
+                    zIndex: 10,
+                  }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)' }}>
+                      {selectedIds.size} selected
+                    </span>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        onClick={() => {
+                          const allIds = filteredItems.map(i => i.id);
+                          const allSelected = allIds.length > 0 && allIds.every(id => selectedIds.has(id));
+                          if (allSelected) {
+                            setSelectedIds(new Set());
+                          } else {
+                            setSelectedIds(new Set(allIds));
+                          }
+                        }}
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          padding: '6px 12px',
+                          borderRadius: 'var(--r-sm)',
+                          background: 'var(--surface-2)',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: 'var(--text)',
+                        }}
+                      >
+                        {filteredItems.length > 0 && selectedIds.size >= filteredItems.length ? 'Deselect All' : 'Select All'}
+                      </button>
+                      <button
+                        onClick={handleDeleteSelectedItems}
+                        disabled={selectedIds.size === 0}
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          padding: '6px 12px',
+                          borderRadius: 'var(--r-sm)',
+                          background: 'var(--danger)',
+                          border: 'none',
+                          cursor: selectedIds.size === 0 ? 'not-allowed' : 'pointer',
+                          color: '#fff',
+                          opacity: selectedIds.size === 0 ? 0.5 : 1,
+                        }}
+                      >
+                        Delete
+                      </button>
+                      <button
+                        onClick={() => { setSelectionMode(false); setSelectedIds(new Set()); }}
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          padding: '6px 12px',
+                          borderRadius: 'var(--r-sm)',
+                          background: 'var(--surface-2)',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: 'var(--text)',
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {filteredItems.length === 0 && !selectionMode && (
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  height: 160,
-                  opacity: 0.4,
-                  textAlign: 'center',
-                }}>
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                    <line x1="3" y1="6" x2="21" y2="6" />
-                    <path d="M16 10a4 4 0 0 1-8 0" />
-                  </svg>
-                  <p style={{ fontSize: 15, fontWeight: 500, marginTop: 12 }}>List is empty</p>
-                </div>
-              )}
+                {filteredItems.length === 0 && !selectionMode && (
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: 160,
+                    opacity: 0.4,
+                    textAlign: 'center',
+                  }}>
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                      <line x1="3" y1="6" x2="21" y2="6" />
+                      <path d="M16 10a4 4 0 0 1-8 0" />
+                    </svg>
+                    <p style={{ fontSize: 15, fontWeight: 500, marginTop: 12 }}>List is empty</p>
+                  </div>
+                )}
 
-              {filteredItems.map(item => {
-                const cat = categories.find(c => c.id === item.categoryId);
-                const subtasks: { id: string; name: string; done: boolean }[] = Array.isArray(item.subtasks) ? item.subtasks : [];
-                return (
-                  <ListItemCard
-                    key={item.id}
-                    id={item.id}
-                    name={item.name ?? ''}
-                    isCompleted={item.isCompleted ?? false}
-                    priority={item.priority ?? false}
-                    quantity={item.quantity ?? 1}
-                    categoryName={cat?.name ?? ''}
-                    categoryColor={cat?.color ?? 'gray'}
-                    subtasks={subtasks}
-                    isDark={isDark}
-                    selectionMode={selectionMode}
-                    isSelected={selectedIds.has(item.id)}
-                    onToggleComplete={(id) => toggleItem(id, item.isCompleted ?? false)}
-                    onTogglePriority={togglePriority}
-                    onDelete={handleDeleteItem}
-                    onViewDetail={(id) => setDetailItemId(id)}
-                    onToggleSelect={(id) => {
-                      setSelectedIds(prev => {
-                        const next = new Set(prev);
-                        if (next.has(id)) next.delete(id); else next.add(id);
-                        return next;
-                      });
-                    }}
-                    onDragStart={setDraggedId}
-                    onDragEnd={() => setDraggedId(null)}
-                    onDragOver={(id) => {
-                      if (draggedId && draggedId !== id) {
-                        handleReorder(draggedId, id);
-                      }
-                    }}
-                  />
-                );
-              })}
-            </div>
+                <SortableContext
+                  items={filteredItems.map(i => i.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {filteredItems.map(item => {
+                    const cat = categories.find(c => c.id === item.categoryId);
+                    const subtasks: { id: string; name: string; done: boolean }[] = Array.isArray(item.subtasks) ? item.subtasks : [];
+                    return (
+                      <ListItemCard
+                        key={item.id}
+                        id={item.id}
+                        name={item.name ?? ''}
+                        isCompleted={item.isCompleted ?? false}
+                        priority={item.priority ?? false}
+                        quantity={item.quantity ?? 1}
+                        categoryName={cat?.name ?? ''}
+                        categoryColor={cat?.color ?? 'gray'}
+                        subtasks={subtasks}
+                        isDark={isDark}
+                        selectionMode={selectionMode}
+                        isSelected={selectedIds.has(item.id)}
+                        onToggleComplete={(id) => toggleItem(id, item.isCompleted ?? false)}
+                        onTogglePriority={togglePriority}
+                        onDelete={handleDeleteItem}
+                        onViewDetail={(id) => setDetailItemId(id)}
+                        onToggleSelect={(id) => {
+                          setSelectedIds(prev => {
+                            const next = new Set(prev);
+                            if (next.has(id)) next.delete(id); else next.add(id);
+                            return next;
+                          });
+                        }}
+                      />
+                    );
+                  })}
+                </SortableContext>
+              </div>
+
+              <DragOverlay dropAnimation={null}>
+                {activeId ? (() => {
+                  const item = filteredItems.find(i => i.id === activeId);
+                  if (!item) return null;
+                  const cat = categories.find(c => c.id === item.categoryId);
+                  const subtasks: { id: string; name: string; done: boolean }[] = Array.isArray(item.subtasks) ? item.subtasks : [];
+                  return (
+                    <ListItemCard
+                      id={item.id}
+                      name={item.name ?? ''}
+                      isCompleted={item.isCompleted ?? false}
+                      priority={item.priority ?? false}
+                      quantity={item.quantity ?? 1}
+                      categoryName={cat?.name ?? ''}
+                      categoryColor={cat?.color ?? 'gray'}
+                      subtasks={subtasks}
+                      isDark={isDark}
+                      selectionMode={selectionMode}
+                      isSelected={selectedIds.has(item.id)}
+                      onToggleComplete={() => {}}
+                      onTogglePriority={() => {}}
+                      onDelete={() => {}}
+                      onViewDetail={() => {}}
+                      onToggleSelect={() => {}}
+                      isOverlay
+                    />
+                  );
+                })() : null}
+              </DragOverlay>
+            </DndContext>
           )}
 
           {activeTab === 'categories' && (

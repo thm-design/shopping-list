@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Check, Flag } from 'lucide-react';
 import { catBg, catText } from '../lib/categoryColors';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface Subtask {
   id: string;
@@ -25,9 +27,7 @@ interface ListItemCardProps {
   onDelete: (id: string) => void;
   onViewDetail: (id: string) => void;
   onToggleSelect: (id: string) => void;
-  onDragStart?: (id: string) => void;
-  onDragEnd?: () => void;
-  onDragOver?: (id: string) => void;
+  isOverlay?: boolean;
 }
 
 export function ListItemCard({
@@ -47,12 +47,45 @@ export function ListItemCard({
   onDelete,
   onViewDetail,
   onToggleSelect,
-  onDragStart,
-  onDragEnd,
-  onDragOver,
+  isOverlay = false,
 }: ListItemCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const priorityBg = priority
+    ? isDark
+      ? 'oklch(17% 0.06 25)'
+      : 'oklch(99% 0.015 25)'
+    : 'transparent';
+  const priorityBorder = priority ? '1px solid oklch(52% 0.22 25 / 0.28)' : 'none';
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    padding: '11px 12px',
+    minHeight: 60,
+    background: priority ? (priorityBg) : 'var(--surface)',
+    border: priority ? priorityBorder : '1px solid var(--border)',
+    borderRadius: 'var(--r-md)',
+    boxShadow: isDragging ? '0 10px 30px oklch(0% 0 0 / 0.15)' : '0 1px 3px oklch(0% 0 0 / 0.05)',
+    opacity: isDragging && !isOverlay ? 0.4 : isCompleted ? 0.52 : 1,
+    cursor: selectionMode ? 'pointer' : 'default',
+    position: 'relative' as const,
+    zIndex: isDragging ? 50 : 'auto',
+    touchAction: 'none',
+  };
 
   useEffect(() => {
     if (!showMenu) return;
@@ -68,23 +101,10 @@ export function ListItemCard({
   const subtaskDone = subtasks.filter((s) => s.done).length;
   const subtaskTotal = subtasks.length;
 
-  const priorityBg = priority
-    ? isDark
-      ? 'oklch(17% 0.06 25)'
-      : 'oklch(99% 0.015 25)'
-    : 'transparent';
-  const priorityBorder = priority ? '1px solid oklch(52% 0.22 25 / 0.28)' : 'none';
-
   return (
     <div
-      draggable={!selectionMode}
-      onDragStart={(e) => {
-        const gripEl = (e.target as HTMLElement).querySelector('[data-grip]');
-        if (!gripEl) { e.preventDefault(); return; }
-        onDragStart?.(id);
-      }}
-      onDragEnd={onDragEnd}
-      onDragOver={(e) => { e.preventDefault(); onDragOver?.(id); }}
+      ref={setNodeRef}
+      style={style}
       onClick={() => {
         if (selectionMode) {
           onToggleSelect(id);
@@ -92,25 +112,12 @@ export function ListItemCard({
           onViewDetail(id);
         }
       }}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        padding: '11px 12px',
-        minHeight: 60,
-        background: priority ? priorityBg : 'var(--surface)',
-        border: priority ? priorityBorder : '1px solid var(--border)',
-        borderRadius: 'var(--r-md)',
-        boxShadow: '0 1px 3px oklch(0% 0 0 / 0.05)',
-        opacity: isCompleted ? 0.52 : 1,
-        cursor: selectionMode ? 'pointer' : 'default',
-        position: 'relative',
-        transition: 'all 0.15s',
-      }}
     >
       {/* Drag grip */}
       {!selectionMode && (
         <div
+          {...attributes}
+          {...listeners}
           data-grip
           style={{
             cursor: 'grab',
@@ -118,6 +125,7 @@ export function ListItemCard({
             display: 'flex',
             alignItems: 'center',
             flexShrink: 0,
+            padding: '4px',
           }}
           onMouseDown={(e) => e.stopPropagation()}
         >
