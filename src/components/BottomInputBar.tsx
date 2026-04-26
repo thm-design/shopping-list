@@ -101,7 +101,7 @@ export function BottomInputBar({
             marginBottom: 8,
             padding: '12px 14px',
             animation: 'slideUp 0.18s ease-out',
-            maxHeight: 'calc(100dvh - 120px)',
+            maxHeight: 'calc(100dvh - 160px)',
             overflowY: 'auto',
             overscrollBehavior: 'contain',
           }}
