@@ -50,9 +50,19 @@ export function ListItemCard({
   onToggleSelect,
   onUpdateQuantity,
   isOverlay = false,
-}: ListItemCardProps) {
+  }: ListItemCardProps) {
   const [showMenu, setShowMenu] = useState(false);
+  const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const withLoading = async (action: string, fn: () => Promise<void> | void) => {
+    setLoadingAction(action);
+    try {
+      await fn();
+    } finally {
+      setLoadingAction(null);
+    }
+  };
 
   const {
     attributes,
@@ -142,7 +152,7 @@ export function ListItemCard({
       )}
 
       {/* Selection checkbox or regular checkbox */}
-      <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
+      <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0, position: 'relative' }} onClick={(e) => e.stopPropagation()}>
         {selectionMode ? (
           <button
             onClick={() => onToggleSelect(id)}
@@ -162,23 +172,30 @@ export function ListItemCard({
             {isSelected && <Check size={14} color="#fff" strokeWidth={3} />}
           </button>
         ) : (
-          <button
-            onClick={() => onToggleComplete(id)}
-            style={{
-              width: 20,
-              height: 20,
-              borderRadius: '50%',
-              border: isCompleted ? 'none' : '1.5px solid var(--border)',
-              background: isCompleted ? 'var(--accent)' : 'transparent',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'background 0.15s, border-color 0.15s',
-            }}
-          >
-            {isCompleted && <Check size={14} color="#fff" strokeWidth={3} />}
-          </button>
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => withLoading('toggleComplete', () => onToggleComplete(id))}
+              disabled={!!loadingAction}
+              style={{
+                width: 20,
+                height: 20,
+                borderRadius: '50%',
+                border: isCompleted ? 'none' : '1.5px solid var(--border)',
+                background: isCompleted ? 'var(--accent)' : 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'background 0.15s, border-color 0.15s',
+                opacity: loadingAction === 'toggleComplete' ? 0.7 : 1,
+              }}
+            >
+              {isCompleted && !loadingAction && <Check size={14} color="#fff" strokeWidth={3} />}
+            </button>
+            {loadingAction === 'toggleComplete' && (
+              <div className="loading-led" style={{ position: 'absolute', top: '50%', left: '50%', margin: '-3px 0 0 -3px', pointerEvents: 'none' }} />
+            )}
+          </div>
         )}
       </div>
 
@@ -256,24 +273,30 @@ export function ListItemCard({
           </div>
 
           {/* Priority Toggle */}
-          <button
-            onClick={() => onTogglePriority(id)}
-            style={{
-              padding: 4,
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: priority ? 'oklch(52% 0.22 25)' : 'var(--text-2)',
-              opacity: priority ? 1 : 0.4,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'opacity 0.2s, color 0.2s',
-            }}
-            aria-label={priority ? "Remove priority" : "Mark as priority"}
-          >
-            <Flag size={18} fill={priority ? 'oklch(52% 0.22 25)' : 'none'} />
-          </button>
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => withLoading('togglePriority', () => onTogglePriority(id))}
+              disabled={!!loadingAction}
+              style={{
+                padding: 4,
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: priority ? 'oklch(52% 0.22 25)' : 'var(--text-2)',
+                opacity: loadingAction === 'togglePriority' ? 0.3 : (priority ? 1 : 0.4),
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'opacity 0.2s, color 0.2s',
+              }}
+              aria-label={priority ? "Remove priority" : "Mark as priority"}
+            >
+              <Flag size={18} fill={priority && loadingAction !== 'togglePriority' ? 'oklch(52% 0.22 25)' : 'none'} />
+            </button>
+            {loadingAction === 'togglePriority' && (
+              <div className="loading-led" style={{ position: 'absolute', top: '50%', left: '50%', margin: '-3px 0 0 -3px', pointerEvents: 'none' }} />
+            )}
+          </div>
 
           {/* ⋯ menu button */}
           <div style={{ position: 'relative' }}>
@@ -316,48 +339,65 @@ export function ListItemCard({
                 <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)' }}>Quantity</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); if (quantity > 1) onUpdateQuantity(id, quantity - 1); }}
-                      style={{
-                        width: 24,
-                        height: 24,
-                        borderRadius: '50%',
-                        background: 'var(--surface-2)',
-                        border: 'none',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'var(--text)',
-                      }}
-                    >
-                      <Minus size={14} />
-                    </button>
+                    <div style={{ position: 'relative' }}>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); if (quantity > 1) withLoading('decQty', () => onUpdateQuantity(id, quantity - 1)); }}
+                        disabled={!!loadingAction}
+                        style={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: '50%',
+                          background: 'var(--surface-2)',
+                          border: 'none',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'var(--text)',
+                          opacity: loadingAction === 'decQty' ? 0.5 : 1,
+                        }}
+                      >
+                        {loadingAction !== 'decQty' && <Minus size={14} />}
+                      </button>
+                      {loadingAction === 'decQty' && (
+                        <div className="loading-led" style={{ position: 'absolute', top: '50%', left: '50%', margin: '-3px 0 0 -3px', pointerEvents: 'none' }} />
+                      )}
+                    </div>
                     <span style={{ fontSize: 14, fontWeight: 700, minWidth: 16, textAlign: 'center' }}>{quantity}</span>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); onUpdateQuantity(id, quantity + 1); }}
-                      style={{
-                        width: 24,
-                        height: 24,
-                        borderRadius: '50%',
-                        background: 'var(--surface-2)',
-                        border: 'none',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'var(--text)',
-                      }}
-                    >
-                      <Plus size={14} />
-                    </button>
+                    <div style={{ position: 'relative' }}>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); withLoading('incQty', () => onUpdateQuantity(id, quantity + 1)); }}
+                        disabled={!!loadingAction}
+                        style={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: '50%',
+                          background: 'var(--surface-2)',
+                          border: 'none',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'var(--text)',
+                          opacity: loadingAction === 'incQty' ? 0.5 : 1,
+                        }}
+                      >
+                        {loadingAction !== 'incQty' && <Plus size={14} />}
+                      </button>
+                      {loadingAction === 'incQty' && (
+                        <div className="loading-led" style={{ position: 'absolute', top: '50%', left: '50%', margin: '-3px 0 0 -3px', pointerEvents: 'none' }} />
+                      )}
+                    </div>
                   </div>
                 </div>
 
                 <button
-                  onClick={(e) => { e.stopPropagation(); onTogglePriority(id); setShowMenu(false); }}
+                  onClick={(e) => { e.stopPropagation(); withLoading('togglePriorityMenu', async () => { await onTogglePriority(id); setShowMenu(false); }); }}
+                  disabled={!!loadingAction}
                   style={{
-                    display: 'block',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
                     width: '100%',
                     padding: '10px 14px',
                     background: 'none',
@@ -369,7 +409,8 @@ export function ListItemCard({
                     fontWeight: 500,
                   }}
                 >
-                  {priority ? '✓ Priority' : 'Flag as priority'}
+                  <span>{priority ? '✓ Priority' : 'Flag as priority'}</span>
+                  {loadingAction === 'togglePriorityMenu' && <div className="loading-led" />}
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); onViewDetail(id); setShowMenu(false); }}
@@ -390,9 +431,12 @@ export function ListItemCard({
                 </button>
                 <div style={{ height: 1, background: 'var(--border)' }} />
                 <button
-                  onClick={(e) => { e.stopPropagation(); onDelete(id); setShowMenu(false); }}
+                  onClick={(e) => { e.stopPropagation(); withLoading('delete', async () => { await onDelete(id); setShowMenu(false); }); }}
+                  disabled={!!loadingAction}
                   style={{
-                    display: 'block',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
                     width: '100%',
                     padding: '10px 14px',
                     background: 'none',
@@ -404,7 +448,8 @@ export function ListItemCard({
                     fontWeight: 500,
                   }}
                 >
-                  Delete
+                  <span>Delete</span>
+                  {loadingAction === 'delete' && <div className="loading-led" />}
                 </button>
               </div>
             )}

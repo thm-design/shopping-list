@@ -33,15 +33,21 @@ export function BottomInputBar({
   const [showAddCat, setShowAddCat] = useState(false);
   const [newCatName, setNewCatName] = useState('');
   const [newCatColor, setNewCatColor] = useState<CatColorName>('gray');
+  const [loading, setLoading] = useState(false);
 
   if (selectionMode) return null;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const trimmed = text.trim();
-    if (!trimmed) return;
-    onAddItem(trimmed, selectedListId, selectedCatId);
-    setText('');
-    setFocused(false);
+    if (!trimmed || loading) return;
+    setLoading(true);
+    try {
+      await onAddItem(trimmed, selectedListId, selectedCatId);
+      setText('');
+      setFocused(false);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAddCategory = () => {
@@ -270,6 +276,7 @@ export function BottomInputBar({
 
         <button
           onClick={handleSubmit}
+          disabled={loading || !text.trim()}
           style={{
             width: 32,
             height: 32,
@@ -279,13 +286,19 @@ export function BottomInputBar({
             borderRadius: 'var(--r-sm)',
             background: text.trim() ? 'var(--accent)' : 'var(--surface-2)',
             border: 'none',
-            cursor: text.trim() ? 'pointer' : 'default',
+            cursor: text.trim() && !loading ? 'pointer' : 'default',
             color: text.trim() ? '#fff' : 'var(--text-2)',
             transition: 'background 0.15s',
             flexShrink: 0,
+            position: 'relative',
+            opacity: loading ? 0.8 : 1,
           }}
         >
-          <ArrowRight size={18} />
+          {loading ? (
+            <div className="loading-led" style={{ background: '#fff', boxShadow: '0 0 8px 2px oklch(100% 0 0 / 0.4)' }} />
+          ) : (
+            <ArrowRight size={18} />
+          )}
         </button>
       </div>
     </div>

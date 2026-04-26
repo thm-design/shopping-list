@@ -23,14 +23,26 @@ export function MyListsPanel({ lists, currentListId, onSelectList, onClose, onAd
   const [newName, setNewName] = useState('');
   const [editingListId, setEditingListId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
+  const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
+
+  const withLoading = async (action: string, fn: () => Promise<void> | void) => {
+    setLoadingAction(action);
+    try {
+      await fn();
+    } finally {
+      setLoadingAction(null);
+    }
+  };
 
   const handleAdd = () => {
     const trimmed = newName.trim();
     if (!trimmed) return;
-    onAddList(trimmed);
-    setNewName('');
-    setShowAdd(false);
+    withLoading('add', async () => {
+      await onAddList(trimmed);
+      setNewName('');
+      setShowAdd(false);
+    });
   };
 
   const startEditing = (list: ShoppingList) => {
@@ -40,9 +52,15 @@ export function MyListsPanel({ lists, currentListId, onSelectList, onClose, onAd
 
   const saveEdit = () => {
     if (editingListId && editName.trim()) {
-      onUpdateListName(editingListId, editName.trim());
+      const id = editingListId;
+      const name = editName.trim();
+      withLoading(`rename-${id}`, async () => {
+        await onUpdateListName(id, name);
+        setEditingListId(null);
+      });
+    } else {
+      setEditingListId(null);
     }
-    setEditingListId(null);
   };
 
   useEffect(() => {
@@ -189,6 +207,7 @@ export function MyListsPanel({ lists, currentListId, onSelectList, onClose, onAd
                   {!isEditing && (
                     <button
                       onClick={() => startEditing(list)}
+                      disabled={!!loadingAction}
                       style={{
                         padding: '10px 8px',
                         background: 'none',
@@ -199,15 +218,21 @@ export function MyListsPanel({ lists, currentListId, onSelectList, onClose, onAd
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
+                        position: 'relative',
                       }}
                       aria-label={`Rename ${list.name}`}
                     >
-                      <Edit2 size={16} />
+                      {loadingAction === `rename-${list.id}` ? (
+                        <div className="loading-led" />
+                      ) : (
+                        <Edit2 size={16} />
+                      )}
                     </button>
                   )}
                   {lists.length > 1 && (
                     <button
-                      onClick={() => { if (confirm(`Delete list "${list.name}"?`)) onDeleteList(list.id); }}
+                      onClick={() => withLoading(`delete-${list.id}`, () => onDeleteList(list.id))}
+                      disabled={!!loadingAction}
                       style={{
                         padding: '10px 8px',
                         background: 'none',
@@ -218,10 +243,15 @@ export function MyListsPanel({ lists, currentListId, onSelectList, onClose, onAd
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
+                        position: 'relative',
                       }}
                       aria-label={`Delete ${list.name}`}
                     >
-                      <Trash2 size={16} />
+                      {loadingAction === `delete-${list.id}` ? (
+                        <div className="loading-led" style={{ background: 'oklch(52% 0.22 25)', boxShadow: '0 0 8px 2px oklch(52% 0.22 25 / 0.4)' }} />
+                      ) : (
+                        <Trash2 size={16} />
+                      )}
                     </button>
                   )}
                 </div>
@@ -240,6 +270,7 @@ export function MyListsPanel({ lists, currentListId, onSelectList, onClose, onAd
                 onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') setShowAdd(false); }}
                 placeholder="List name"
                 autoFocus
+                disabled={!!loadingAction}
                 style={{
                   flex: 1,
                   padding: '8px 12px',
@@ -254,6 +285,7 @@ export function MyListsPanel({ lists, currentListId, onSelectList, onClose, onAd
               />
               <button
                 onClick={handleAdd}
+                disabled={!!loadingAction || !newName.trim()}
                 style={{
                   padding: '8px 16px',
                   fontSize: 14,
@@ -263,9 +295,13 @@ export function MyListsPanel({ lists, currentListId, onSelectList, onClose, onAd
                   border: 'none',
                   borderRadius: 'var(--r-sm)',
                   cursor: 'pointer',
+                  minWidth: 64,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
-                Add
+                {loadingAction === 'add' ? <div className="loading-led" style={{ background: '#fff' }} /> : 'Add'}
               </button>
             </div>
           ) : (

@@ -587,30 +587,38 @@ function AppImpl() {
     }
   };
 
-  const handleDeleteList = async (id: string) => {
-    // Delete items in this list first
-    const listItemsToDelete = items.filter(i => i.listId === id);
-    for (const item of listItemsToDelete) {
-      await client.models.ListItem.delete({ id: item.id });
-    }
-    // Delete categories in this list
-    const listCatsToDelete = categories.filter(c => c.listId === id);
-    for (const cat of listCatsToDelete) {
-      await client.models.Category.delete({ id: cat.id });
-    }
-    // Delete the list itself
-    const { errors } = await client.models.ShoppingList.delete({ id });
-    if (!errors) {
-      setLists(prev => {
-        const next = prev.filter(l => l.id !== id);
-        if (currentListId === id) {
-          setCurrentListId(next.length > 0 ? next[0].id : null);
+  const handleDeleteList = (id: string) => {
+    const list = lists.find(l => l.id === id);
+    const listName = list?.name ?? 'this list';
+    setDeleteConfirm({
+      message: `Are you sure you want to delete "${listName}"? All items and categories in this list will also be deleted.`,
+      onConfirm: async () => {
+        // Delete items in this list first
+        const listItemsToDelete = items.filter(i => i.listId === id);
+        for (const item of listItemsToDelete) {
+          await client.models.ListItem.delete({ id: item.id });
         }
-        return next;
-      });
-      setItems(prev => prev.filter(i => i.listId !== id));
-      setCategories(prev => prev.filter(c => c.listId !== id));
-    }
+        // Delete categories in this list
+        const listCatsToDelete = categories.filter(c => c.listId === id);
+        for (const cat of listCatsToDelete) {
+          await client.models.Category.delete({ id: cat.id });
+        }
+        // Delete the list itself
+        const { errors } = await client.models.ShoppingList.delete({ id });
+        if (!errors) {
+          setLists(prev => {
+            const next = prev.filter(l => l.id !== id);
+            if (currentListId === id) {
+              setCurrentListId(next.length > 0 ? next[0].id : null);
+            }
+            return next;
+          });
+          setItems(prev => prev.filter(i => i.listId !== id));
+          setCategories(prev => prev.filter(c => c.listId !== id));
+        }
+        setDeleteConfirm(null);
+      },
+    });
   };
 
   const handleUpdateListName = async (id: string, name: string) => {

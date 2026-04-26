@@ -12,12 +12,18 @@ const ADD_COLORS: CatColorName[] = ['gray', 'green', 'blue', 'red', 'orange', 'p
 export function AddCategoryModal({ onAdd, onClose }: AddCategoryModalProps) {
   const [name, setName] = useState('');
   const [color, setColor] = useState<CatColorName>('gray');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const trimmed = name.trim();
-    if (!trimmed) return;
-    onAdd(trimmed, color);
-    onClose();
+    if (!trimmed || loading) return;
+    setLoading(true);
+    try {
+      await onAdd(trimmed, color);
+      onClose();
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -60,6 +66,7 @@ export function AddCategoryModal({ onAdd, onClose }: AddCategoryModalProps) {
             if (e.key === 'Escape') onClose();
           }}
           autoFocus
+          disabled={loading}
           style={{
             width: '100%',
             padding: '8px 12px',
@@ -78,6 +85,7 @@ export function AddCategoryModal({ onAdd, onClose }: AddCategoryModalProps) {
             <button
               key={c}
               onClick={() => setColor(c)}
+              disabled={loading}
               style={{
                 width: 28,
                 height: 28,
@@ -86,6 +94,7 @@ export function AddCategoryModal({ onAdd, onClose }: AddCategoryModalProps) {
                 border: color === c ? '2.5px solid var(--text)' : '2.5px solid transparent',
                 cursor: 'pointer',
                 transition: 'border-color 0.15s',
+                opacity: loading ? 0.6 : 1,
               }}
             />
           ))}
@@ -94,6 +103,7 @@ export function AddCategoryModal({ onAdd, onClose }: AddCategoryModalProps) {
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
           <button
             onClick={onClose}
+            disabled={loading}
             style={{
               padding: '8px 20px',
               borderRadius: 'var(--r-sm)',
@@ -109,7 +119,7 @@ export function AddCategoryModal({ onAdd, onClose }: AddCategoryModalProps) {
           </button>
           <button
             onClick={handleSubmit}
-            disabled={!name.trim()}
+            disabled={loading || !name.trim()}
             style={{
               padding: '8px 20px',
               borderRadius: 'var(--r-sm)',
@@ -118,10 +128,15 @@ export function AddCategoryModal({ onAdd, onClose }: AddCategoryModalProps) {
               color: name.trim() ? '#fff' : 'var(--text-2)',
               fontSize: 14,
               fontWeight: 600,
-              cursor: name.trim() ? 'pointer' : 'default',
+              cursor: name.trim() && !loading ? 'pointer' : 'default',
+              minWidth: 80,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative',
             }}
           >
-            Add
+            {loading ? <div className="loading-led" style={{ background: '#fff' }} /> : 'Add'}
           </button>
         </div>
       </div>

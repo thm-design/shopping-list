@@ -104,8 +104,23 @@ body {
   to   { max-height: 60px; opacity: 1; }
 }
 
+@keyframes ledPulse {
+  0%   { transform: scale(0.8); opacity: 0.4; box-shadow: 0 0 0 0 oklch(55% 0.20 245 / 0.4); }
+  50%  { transform: scale(1.2); opacity: 1;   box-shadow: 0 0 8px 2px oklch(55% 0.20 245 / 0.6); }
+  100% { transform: scale(0.8); opacity: 0.4; box-shadow: 0 0 0 0 oklch(55% 0.20 245 / 0.4); }
+}
+
 /* ── Utility classes ── */
 .animate-slide-in-left { animation: slideInLeft 0.22s cubic-bezier(0.4, 0, 0.2, 1); }
 .animate-fade-in       { animation: fadeIn 0.15s ease-out; }
 .animate-slide-up       { animation: slideUp 0.2s ease-out; }
 .animate-expand-down    { animation: expandDown 0.18s ease-out; }
+
+.loading-led {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: ledPulse 1.2s infinite ease-in-out;
+  display: inline-block;
+}
