@@ -46,7 +46,7 @@ export function Header({
           style={{
             width: 40,
             height: 40,
-            borderRadius: 10,
+            borderRadius: 8,
             background: isDark ? '#fff' : '#111',
             color: isDark ? '#111' : '#fff',
             display: 'flex',

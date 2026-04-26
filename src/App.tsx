@@ -955,7 +955,7 @@ function AppImpl() {
                 onDragEnd={handleDragEnd}
                 modifiers={[restrictToVerticalAxis, restrictToWindowEdges]}
               >
-                <div style={{ padding: '0 14px', paddingBottom: 220, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ padding: '0 14px', paddingBottom: 135, display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {selectionMode && (
                   <div style={{
                     display: 'flex',

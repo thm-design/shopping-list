@@ -90,7 +90,7 @@ export function ListItemCard({
     minHeight: 60,
     background: priority ? (priorityBg) : 'var(--surface)',
     border: priority ? priorityBorder : '1px solid var(--border)',
-    borderRadius: 'var(--r-md)',
+    borderRadius: 'var(--r-xs)',
     boxShadow: isDragging ? '0 10px 30px oklch(0% 0 0 / 0.15)' : '0 1px 3px oklch(0% 0 0 / 0.05)',
     opacity: isDragging && !isOverlay ? 0.4 : isCompleted ? 0.52 : 1,
     cursor: selectionMode ? 'pointer' : 'default',
@@ -135,7 +135,7 @@ export function ListItemCard({
             display: 'flex',
             alignItems: 'center',
             flexShrink: 0,
-            padding: '8px 12px 8px 10px',
+            padding: '8px 5px 8px 0px',
             cursor: 'grab',
             touchAction: 'none',
           }}
@@ -152,7 +152,7 @@ export function ListItemCard({
       )}
 
       {/* Selection checkbox or regular checkbox */}
-      <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0, position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+      <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0, position: 'relative', padding: '0px 10px 0px 0px' }} onClick={(e) => e.stopPropagation()}>
         {selectionMode ? (
           <button
             onClick={() => onToggleSelect(id)}
@@ -200,7 +200,7 @@ export function ListItemCard({
       </div>
 
       {/* Item name and badges column */}
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
         <span
           style={{
             fontSize: 14,
@@ -224,10 +224,11 @@ export function ListItemCard({
                 fontWeight: 700,
                 textTransform: 'uppercase' as const,
                 padding: '2px 7px',
-                borderRadius: 'var(--r-sm)',
+                borderRadius: 'var(--r-xs)',
                 background: catBg(categoryColor, isDark),
                 color: catText(categoryColor, isDark),
                 flexShrink: 0,
+                border: '0.5px solid var(--border)',
               }}
             >
               {categoryName}

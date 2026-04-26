@@ -1,4 +1,4 @@
-import { X, Plus, Check, Edit2, Trash2, ShoppingBag, GripVertical } from 'lucide-react';
+import { X, Plus, Check, Edit2, Trash2, ListPlus, GripVertical } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import {
   DndContext,
@@ -304,12 +304,12 @@ export function MyListsPanel({
           flexShrink: 0,
         }}
       >
-        <div style={{ padding: '24px 20px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div
               style={{
-                width: 32,
-                height: 32,
+                width: 40,
+                height: 40,
                 borderRadius: 8,
                 background: isDark ? '#fff' : '#111',
                 color: isDark ? '#111' : '#fff',
@@ -319,18 +319,18 @@ export function MyListsPanel({
                 boxShadow: '0 2px 6px oklch(0% 0 0 / 0.1)',
               }}
             >
-              <ShoppingBag size={16} strokeWidth={2.5} />
+              
+              <ListPlus size={20} strokeWidth={2.5} />
             </div>
-            <h1 style={{ fontSize: 18, fontWeight: 800, letterSpacing: -0.5, color: 'var(--text)', margin: 0 }}>AirList</h1>
+            <h1 style={{ fontSize: 18, fontWeight: 800, letterSpacing: -0.5, color: 'var(--text)', margin: 0 }}>My Lists</h1>
           </div>
-          {!isStatic && (
-            <button
+
+          <button
               onClick={onClose}
               style={{ background: 'var(--surface-2)', border: 'none', borderRadius: 'var(--r-sm)', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text)' }}
             >
               <X size={16} />
             </button>
-          )}
         </div>
 
         <div style={{ padding: '20px 20px 10px' }}>

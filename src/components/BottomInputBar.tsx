@@ -252,12 +252,19 @@ export function BottomInputBar({
       {/* Input bar */}
       <div
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '10px 12px',
+          position: 'relative',
+          padding: '0 10px 10px 10px',
+          margin: '0 -10px -10px -10px',
+          background: 'var(--bg)'
+        }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '10px 12px',
           background: 'var(--surface)',
-          borderRadius: 'var(--r-lg)',
+          borderRadius: 'var(--r-sm)',
           border: '1px solid var(--border)',
           boxShadow: '0 4px 20px oklch(0% 0 0 / 0.10)',
         }}
@@ -270,7 +277,7 @@ export function BottomInputBar({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            borderRadius: 'var(--r-sm)',
+            borderRadius: 'var(--r-xs)',
             background: 'var(--accent)',
             border: 'none',
             cursor: 'pointer',
@@ -324,6 +331,7 @@ export function BottomInputBar({
             <ArrowRight size={18} />
           )}
         </button>
+      </div>
       </div>
     </div>
   );

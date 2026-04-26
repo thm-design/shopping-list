@@ -18,7 +18,8 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           <ShoppingBag size={40} className="text-white dark:text-zinc-900" strokeWidth={1.5} />
         </div>
       </div>
-      <h1 className="mt-6 text-2xl font-bold tracking-tight text-zinc-900 dark:text-white flex items-center gap-1">
+      <br />
+      <h1 className="mt-6 text-3xl font-bold tracking-tight text-zinc-900 dark:text-white flex items-center gap-1">
         AirList
       </h1>
     </div>
