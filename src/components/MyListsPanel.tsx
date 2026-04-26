@@ -127,6 +127,7 @@ export function MyListsPanel({ lists, currentListId, onSelectList, onClose, onAd
                   borderRadius: 'var(--r-sm)',
                   color: 'var(--text)',
                   outline: 'none',
+                  width: '80%',
                 }}
               />
               <button
