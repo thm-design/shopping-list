@@ -10,7 +10,7 @@ export function ProgressBar({ doneCount, totalCount, listName, isCompact = false
   const isComplete = totalCount > 0 && doneCount === totalCount;
 
   return (
-    <div style={{ padding: isCompact ? '10px 14px 8px' : '24px 14px 20px', transition: 'padding 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }}>
+    <div style={{ padding: isCompact ? '0px 14px 8px' : '0px 14px 20px', transition: 'padding 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }}>
       {/* Animated title area */}
       <div style={{
         display: 'grid',
@@ -24,22 +24,26 @@ export function ProgressBar({ doneCount, totalCount, listName, isCompact = false
             style={{
               display: 'flex',
               justifyContent: 'space-between',
-              alignItems: 'baseline',
+              alignItems: 'center',
               marginBottom: 12,
             }}
           >
+            {/* this h2 needs to  not wrpa past device with and go into elisis if it is too long */}
             <h2 style={{ 
               fontSize: 32, 
               fontWeight: 900, 
               letterSpacing: -1, 
               color: 'var(--text)',
-              margin: 0
+              margin: 0,
+              textOverflow: 'ellipsis',
+              overflow: 'hidden',
+              whiteSpace: 'nowrap'
             }}>
               {listName || 'List'}
             </h2>
             {totalCount > 0 && (
-              <span style={{ color: 'var(--text-2)', fontSize: 13, fontWeight: 700 }}>
-                {doneCount} / {totalCount} items
+              <span style={{ color: 'var(--text-2)', fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
+                {doneCount} / {totalCount}
               </span>
             )}
           </div>
@@ -69,7 +73,7 @@ export function ProgressBar({ doneCount, totalCount, listName, isCompact = false
               }}
             />
           </div>
-          {isCompact && (
+          {/* {isCompact && (
             <span style={{ 
               color: 'var(--text-2)', 
               fontSize: 11, 
@@ -79,7 +83,7 @@ export function ProgressBar({ doneCount, totalCount, listName, isCompact = false
             }}>
               {doneCount} / {totalCount}
             </span>
-          )}
+          )} */}
         </div>
       )}
     </div>
