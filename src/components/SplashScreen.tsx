@@ -19,9 +19,13 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
         </div>
       </div>
       <br />
-      <h1 className="mt-6 text-3xl font-bold tracking-tight text-zinc-900 dark:text-white flex items-center gap-1">
-        AirList
-      </h1>
+      <div className="cyber-border-container">
+        <div className="cyber-border-inner" style={{ padding: '4px 16px' }}>
+          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white flex items-center gap-1">
+            AirList
+          </h1>
+        </div>
+      </div>
     </div>
   );
 }

@@ -71,7 +71,34 @@ export function ListItemCard({
     transform,
     transition,
     isDragging,
+    isOver,
   } = useSortable({ id });
+
+  useEffect(() => {
+    if (!showMenu) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showMenu]);
+
+  if (isDragging && !isOverlay) {
+    return (
+      <div
+        ref={setNodeRef}
+        style={{
+          height: 60,
+          background: 'var(--surface-2)',
+          borderRadius: 'var(--r-xs)',
+          border: '1px solid var(--border)',
+          opacity: 0.6,
+        }}
+      />
+    );
+  }
 
   const priorityBg = priority
     ? isDark
@@ -98,17 +125,6 @@ export function ListItemCard({
     zIndex: isDragging ? 50 : 'auto',
   };
 
-  useEffect(() => {
-    if (!showMenu) return;
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setShowMenu(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [showMenu]);
-
   const subtaskDone = subtasks.filter((s) => s.done).length;
   const subtaskTotal = subtasks.length;
 
@@ -116,6 +132,7 @@ export function ListItemCard({
     <div
       ref={setNodeRef}
       style={style}
+      className={isOver ? 'drop-target-highlight' : ''}
       onClick={() => {
         if (selectionMode) {
           onToggleSelect(id);

@@ -18,7 +18,6 @@ import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { restrictToVerticalAxis, restrictToWindowEdges } from '@dnd-kit/modifiers';
 
@@ -1064,9 +1063,8 @@ function AppImpl() {
 
                 <SortableContext
                   items={filteredItems.map(i => i.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  {filteredItems.map(item => {
+                  strategy={() => null}
+                >                  {filteredItems.map(item => {
                     const cat = categories.find(c => c.id === item.categoryId);
                     const subtasks: { id: string; name: string; done: boolean }[] = Array.isArray(item.subtasks) ? item.subtasks : [];
                     return (

@@ -12,7 +12,6 @@ import {
 import {
   SortableContext,
   sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -61,10 +60,26 @@ interface SortableListRowProps {
 function SortableListRow({ 
   list, isActive, isEditing, editName, setEditName, saveEdit, startEditing, onSelectList, onClose, onDeleteList, withLoading, loadingAction, editInputRef, listsCount, isSortable 
 }: SortableListRowProps) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ 
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } = useSortable({ 
     id: list.id,
     disabled: !isSortable 
   });
+
+  if (isDragging) {
+    return (
+      <div
+        ref={setNodeRef}
+        style={{
+          height: 52,
+          background: 'var(--surface-2)',
+          border: '1px solid var(--border)',
+          margin: '0 8px',
+          borderRadius: 'var(--r-sm)',
+          opacity: 0.6,
+        }}
+      />
+    );
+  }
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -79,7 +94,7 @@ function SortableListRow({
   };
 
   return (
-    <div ref={setNodeRef} style={style}>
+    <div ref={setNodeRef} style={style} className={isOver ? 'drop-target-highlight' : ''}>
       <div 
         {...attributes} 
         {...listeners} 
@@ -400,7 +415,7 @@ export function MyListsPanel({
           >
             <SortableContext
               items={sortedLists.map(l => l.id)}
-              strategy={verticalListSortingStrategy}
+              strategy={() => null}
             >
               {sortedLists.map((list) => (
                 <SortableListRow

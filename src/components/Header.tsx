@@ -73,23 +73,22 @@ export function Header({
             userSelect: 'none'
           }}
         >
-          <h1 style={{ 
-            fontSize: 20, 
-            fontWeight: 800, 
-            letterSpacing: -0.6, 
-            color: 'var(--text)',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            margin: 0,
-            position: 'absolute',
-            opacity: isCompact ? 0 : 1,
-            transform: isCompact ? 'translateY(-12px)' : 'translateY(0)',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            pointerEvents: isCompact ? 'none' : 'auto',
-          }}>
-            AirList
-          </h1>
+          <div className="cyber-border-container" style={{ position: 'absolute', opacity: isCompact ? 0 : 1, transform: isCompact ? 'translateY(-12px)' : 'translateY(0)', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', pointerEvents: isCompact ? 'none' : 'auto' }}>
+            <div className="cyber-border-inner">
+              <h1 style={{ 
+                fontSize: 20, 
+                fontWeight: 800, 
+                letterSpacing: -0.6, 
+                color: 'var(--text)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                margin: 0,
+              }}>
+                AirList
+              </h1>
+            </div>
+          </div>
           <h1 style={{ 
             fontSize: 18, 
             fontWeight: 700, 
