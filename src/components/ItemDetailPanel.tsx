@@ -96,11 +96,38 @@ export function ItemDetailPanel({
   const handleTouchEnd = () => {
     if (!isDragging) return;
     setIsDragging(false);
-    if (dragY > 100) {
+    if (dragY > 120) {
       onClose();
     } else {
       setDragY(0);
     }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    touchStartY.current = e.clientY;
+    setIsDragging(true);
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaY = moveEvent.clientY - touchStartY.current;
+      if (deltaY > 0) {
+        setDragY(deltaY);
+      }
+    };
+
+    const handleMouseUp = (upEvent: MouseEvent) => {
+      setIsDragging(false);
+      const finalDeltaY = upEvent.clientY - touchStartY.current;
+      if (finalDeltaY > 120) {
+        onClose();
+      } else {
+        setDragY(0);
+      }
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
   };
 
   const cat = categories.find((c) => c.id === item.categoryId);
@@ -145,6 +172,7 @@ export function ItemDetailPanel({
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
+          onMouseDown={handleMouseDown}
         >
           <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border)' }} />
         </div>

@@ -240,20 +240,9 @@ export function ListItemCard({
         </div>
       </div>
 
-      {/* Right-aligned area: QTY, Priority Toggle, and Menu */}
+      {/* Right-aligned area: Priority Toggle, Menu, and QTY */}
       {!selectionMode && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
-          {/* QTY display */}
-          <div style={{ 
-            fontSize: 13, 
-            fontWeight: 700, 
-            color: 'var(--text-2)',
-            minWidth: 24,
-            textAlign: 'center'
-          }}>
-            {quantity > 1 ? `×${quantity}` : ''}
-          </div>
-
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
           {/* Priority Toggle */}
           <button
             onClick={() => onTogglePriority(id)}
@@ -273,143 +262,153 @@ export function ListItemCard({
           >
             <Flag size={18} fill={priority ? 'oklch(52% 0.22 25)' : 'none'} />
           </button>
-        </div>
-      )}
 
-      {/* ⋯ menu button */}
-      {!selectionMode && (
-        <div style={{ position: 'relative', flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
-          <button
-            onClick={() => setShowMenu(!showMenu)}
-            style={{
-              width: 28,
-              height: 28,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: 'var(--r-xs)',
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'var(--text-2)',
-              fontSize: 17,
-              lineHeight: 1,
-            }}
-          >
-            ···
-          </button>
-
-          {showMenu && (
-            <div
-              ref={menuRef}
+          {/* ⋯ menu button */}
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setShowMenu(!showMenu)}
               style={{
-                position: 'absolute',
-                right: 0,
-                top: '110%',
-                zIndex: 100,
-                minWidth: 172,
-                background: 'var(--surface)',
-                borderRadius: 'var(--r-md)',
-                boxShadow: '0 8px 24px oklch(0% 0 0 / 0.14)',
-                border: '1px solid var(--border)',
-                overflow: 'hidden',
+                width: 28,
+                height: 28,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 'var(--r-xs)',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--text-2)',
+                fontSize: 17,
+                lineHeight: 1,
               }}
             >
-              <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)' }}>Quantity</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); if (quantity > 1) onUpdateQuantity(id, quantity - 1); }}
-                    style={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: '50%',
-                      background: 'var(--surface-2)',
-                      border: 'none',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'var(--text)',
-                    }}
-                  >
-                    <Minus size={14} />
-                  </button>
-                  <span style={{ fontSize: 14, fontWeight: 700, minWidth: 16, textAlign: 'center' }}>{quantity}</span>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onUpdateQuantity(id, quantity + 1); }}
-                    style={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: '50%',
-                      background: 'var(--surface-2)',
-                      border: 'none',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'var(--text)',
-                    }}
-                  >
-                    <Plus size={14} />
-                  </button>
-                </div>
-              </div>
+              ···
+            </button>
 
-              <button
-                onClick={(e) => { e.stopPropagation(); onTogglePriority(id); setShowMenu(false); }}
+            {showMenu && (
+              <div
+                ref={menuRef}
                 style={{
-                  display: 'block',
-                  width: '100%',
-                  padding: '10px 14px',
-                  background: 'none',
-                  border: 'none',
-                  textAlign: 'left',
-                  fontSize: 13,
-                  cursor: 'pointer',
-                  color: priority ? 'oklch(52% 0.22 25)' : 'var(--text)',
-                  fontWeight: 500,
+                  position: 'absolute',
+                  right: 0,
+                  top: '110%',
+                  zIndex: 100,
+                  minWidth: 172,
+                  background: 'var(--surface)',
+                  borderRadius: 'var(--r-md)',
+                  boxShadow: '0 8px 24px oklch(0% 0 0 / 0.14)',
+                  border: '1px solid var(--border)',
+                  overflow: 'hidden',
                 }}
               >
-                {priority ? '✓ Priority' : 'Flag as priority'}
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); onViewDetail(id); setShowMenu(false); }}
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  padding: '10px 14px',
-                  background: 'none',
-                  border: 'none',
-                  textAlign: 'left',
-                  fontSize: 13,
-                  cursor: 'pointer',
-                  color: 'var(--text)',
-                  fontWeight: 500,
-                }}
-              >
-                View details
-              </button>
-              <div style={{ height: 1, background: 'var(--border)' }} />
-              <button
-                onClick={(e) => { e.stopPropagation(); onDelete(id); setShowMenu(false); }}
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  padding: '10px 14px',
-                  background: 'none',
-                  border: 'none',
-                  textAlign: 'left',
-                  fontSize: 13,
-                  cursor: 'pointer',
-                  color: 'oklch(52% 0.22 25)',
-                  fontWeight: 500,
-                }}
-              >
-                Delete
-              </button>
-            </div>
-          )}
+                <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)' }}>Quantity</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); if (quantity > 1) onUpdateQuantity(id, quantity - 1); }}
+                      style={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: '50%',
+                        background: 'var(--surface-2)',
+                        border: 'none',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'var(--text)',
+                      }}
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <span style={{ fontSize: 14, fontWeight: 700, minWidth: 16, textAlign: 'center' }}>{quantity}</span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onUpdateQuantity(id, quantity + 1); }}
+                      style={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: '50%',
+                        background: 'var(--surface-2)',
+                        border: 'none',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'var(--text)',
+                      }}
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  onClick={(e) => { e.stopPropagation(); onTogglePriority(id); setShowMenu(false); }}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '10px 14px',
+                    background: 'none',
+                    border: 'none',
+                    textAlign: 'left',
+                    fontSize: 13,
+                    cursor: 'pointer',
+                    color: priority ? 'oklch(52% 0.22 25)' : 'var(--text)',
+                    fontWeight: 500,
+                  }}
+                >
+                  {priority ? '✓ Priority' : 'Flag as priority'}
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onViewDetail(id); setShowMenu(false); }}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '10px 14px',
+                    background: 'none',
+                    border: 'none',
+                    textAlign: 'left',
+                    fontSize: 13,
+                    cursor: 'pointer',
+                    color: 'var(--text)',
+                    fontWeight: 500,
+                  }}
+                >
+                  View details
+                </button>
+                <div style={{ height: 1, background: 'var(--border)' }} />
+                <button
+                  onClick={(e) => { e.stopPropagation(); onDelete(id); setShowMenu(false); }}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '10px 14px',
+                    background: 'none',
+                    border: 'none',
+                    textAlign: 'left',
+                    fontSize: 13,
+                    cursor: 'pointer',
+                    color: 'oklch(52% 0.22 25)',
+                    fontWeight: 500,
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* QTY display */}
+          <div style={{ 
+            fontSize: 13, 
+            fontWeight: 800, 
+            color: 'var(--text-2)',
+            minWidth: 28,
+            textAlign: 'right',
+            paddingLeft: 4
+          }}>
+            {quantity > 1 ? `×${quantity}` : ''}
+          </div>
         </div>
       )}
     </div>

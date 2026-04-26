@@ -11,25 +11,25 @@ export function ProgressBar({ doneCount, totalCount, listName }: ProgressBarProp
   const isComplete = doneCount === totalCount;
 
   return (
-    <div style={{ padding: '12px 14px 16px' }}>
+    <div style={{ padding: '24px 14px 20px' }}>
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'baseline',
-          marginBottom: 10,
+          marginBottom: 12,
         }}
       >
         <h2 style={{ 
-          fontSize: 26, 
+          fontSize: 32, 
           fontWeight: 900, 
-          letterSpacing: -0.8, 
+          letterSpacing: -1, 
           color: 'var(--text)',
           margin: 0
         }}>
           {listName || 'List'}
         </h2>
-        <span style={{ color: 'var(--text-2)', fontSize: 12, fontWeight: 700 }}>
+        <span style={{ color: 'var(--text-2)', fontSize: 13, fontWeight: 700 }}>
           {doneCount} / {totalCount} items
         </span>
       </div>
