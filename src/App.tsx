@@ -956,10 +956,14 @@ function AppImpl() {
                       onClick={(e) => { e.stopPropagation(); handleDeleteCategory(cat.id); }}
                       style={{
                         padding: 6,
-                        color: 'var(--text-2)',
-                        background: 'none',
+                        color: 'oklch(52% 0.22 25)',
+                        background: 'var(--surface-2)',
                         border: 'none',
+                        borderRadius: 'var(--r-sm)',
                         cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                       }}
                       aria-label={`Delete ${cat.name} category`}
                     >
@@ -1059,6 +1063,7 @@ function AppImpl() {
             onToggleSubtask={handleToggleSubtask}
             onAddSubtask={handleAddSubtask}
             onDeleteSubtask={handleDeleteSubtask}
+            onUpdateCategory={(itemId, categoryId) => updateItem(itemId, { categoryId })}
             onDelete={(id) => { setDetailItemId(null); handleDeleteItem(id); }}
           />
         )}

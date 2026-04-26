@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, ArrowRight } from 'lucide-react';
 import { catDot, catBg, catText, CAT_COLOR_NAMES, type CatColorName } from '../lib/categoryColors';
 import { NAV_H } from './BottomNav';
@@ -26,6 +26,10 @@ export function BottomInputBar({
   const [focused, setFocused] = useState(false);
   const [selectedListId, setSelectedListId] = useState(currentListId);
   const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSelectedListId(currentListId);
+  }, [currentListId]);
   const [showAddCat, setShowAddCat] = useState(false);
   const [newCatName, setNewCatName] = useState('');
   const [newCatColor, setNewCatColor] = useState<CatColorName>('gray');
@@ -37,6 +41,7 @@ export function BottomInputBar({
     if (!trimmed) return;
     onAddItem(trimmed, selectedListId, selectedCatId);
     setText('');
+    setFocused(false);
   };
 
   const handleAddCategory = () => {

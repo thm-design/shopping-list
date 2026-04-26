@@ -96,15 +96,16 @@ export function ListItemCard({
         display: 'flex',
         alignItems: 'center',
         gap: 8,
-        padding: '11px 10px 11px 8px',
-        minHeight: 46,
-        background: priority ? priorityBg : 'transparent',
-        border: priority ? priorityBorder : 'none',
-        borderRadius: 'var(--r-sm)',
+        padding: '11px 12px',
+        minHeight: 60,
+        background: priority ? priorityBg : 'var(--surface)',
+        border: priority ? priorityBorder : '1px solid var(--border)',
+        borderRadius: 'var(--r-md)',
+        boxShadow: '0 1px 3px oklch(0% 0 0 / 0.05)',
         opacity: isCompleted ? 0.52 : 1,
         cursor: selectionMode ? 'pointer' : 'default',
         position: 'relative',
-        transition: 'background 0.15s, opacity 0.15s',
+        transition: 'all 0.15s',
       }}
     >
       {/* Drag grip */}
@@ -181,74 +182,76 @@ export function ListItemCard({
         />
       )}
 
-      {/* Item name */}
-      <span
-        style={{
-          fontSize: 14,
-          fontWeight: 500,
-          flex: 1,
-          minWidth: 0,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-          textDecoration: isCompleted ? 'line-through' : 'none',
-          color: isCompleted ? 'var(--text-2)' : 'var(--text)',
-        }}
-      >
-        {name}
-      </span>
-
-      {/* Subtask badge */}
-      {subtaskTotal > 0 && (
+      {/* Item name and badges column */}
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
         <span
           style={{
-            fontSize: 10,
+            fontSize: 14,
             fontWeight: 600,
-            padding: '2px 6px',
-            borderRadius: 'var(--r-xs)',
-            background: 'var(--surface-2)',
-            color: 'var(--text-2)',
-            flexShrink: 0,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            textDecoration: isCompleted ? 'line-through' : 'none',
+            color: isCompleted ? 'var(--text-2)' : 'var(--text)',
           }}
         >
-          {subtaskDone}/{subtaskTotal}
+          {name}
         </span>
-      )}
 
-      {/* Category pill */}
-      {categoryName && (
-        <span
-          style={{
-            fontSize: 10,
-            fontWeight: 700,
-            textTransform: 'uppercase' as const,
-            padding: '2px 7px',
-            borderRadius: 'var(--r-full)',
-            background: catBg(categoryColor, isDark),
-            color: catText(categoryColor, isDark),
-            flexShrink: 0,
-          }}
-        >
-          {categoryName}
-        </span>
-      )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          {/* Category pill */}
+          {categoryName && (
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                textTransform: 'uppercase' as const,
+                padding: '2px 7px',
+                borderRadius: 'var(--r-full)',
+                background: catBg(categoryColor, isDark),
+                color: catText(categoryColor, isDark),
+                flexShrink: 0,
+              }}
+            >
+              {categoryName}
+            </span>
+          )}
 
-      {/* Qty badge */}
-      {quantity > 1 && (
-        <span
-          style={{
-            fontSize: 11,
-            fontWeight: 700,
-            padding: '2px 5px',
-            borderRadius: 'var(--r-xs)',
-            background: 'var(--surface-2)',
-            color: 'var(--text-2)',
-            flexShrink: 0,
-          }}
-        >
-          ×{quantity}
-        </span>
-      )}
+          {/* Subtask badge */}
+          {subtaskTotal > 0 && (
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 600,
+                padding: '2px 6px',
+                borderRadius: 'var(--r-xs)',
+                background: 'var(--surface-2)',
+                color: 'var(--text-2)',
+                flexShrink: 0,
+              }}
+            >
+              {subtaskDone}/{subtaskTotal}
+            </span>
+          )}
+
+          {/* Qty badge */}
+          {quantity > 1 && (
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                padding: '2px 5px',
+                borderRadius: 'var(--r-xs)',
+                background: 'var(--surface-2)',
+                color: 'var(--text-2)',
+                flexShrink: 0,
+              }}
+            >
+              ×{quantity}
+            </span>
+          )}
+        </div>
+      </div>
 
       {/* ⋯ menu button */}
       {!selectionMode && (

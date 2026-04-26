@@ -43,6 +43,7 @@ interface ItemDetailPanelProps {
   onToggleSubtask: (itemId: string, subtaskId: string) => void;
   onAddSubtask: (itemId: string, name: string) => void;
   onDeleteSubtask: (itemId: string, subtaskId: string) => void;
+  onUpdateCategory: (itemId: string, categoryId: string | null) => void;
   onDelete: (id: string) => void;
 }
 
@@ -58,6 +59,7 @@ export function ItemDetailPanel({
   onToggleSubtask,
   onAddSubtask,
   onDeleteSubtask,
+  onUpdateCategory,
   onDelete,
 }: ItemDetailPanelProps) {
   const [editName, setEditName] = useState(item?.name ?? '');
@@ -167,7 +169,7 @@ export function ItemDetailPanel({
           />
 
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 18 }}>
-            {cat && (
+            <div style={{ position: 'relative' }}>
               <span style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -176,13 +178,32 @@ export function ItemDetailPanel({
                 borderRadius: 'var(--r-full)',
                 fontSize: 13,
                 fontWeight: 600,
-                background: catBg(cat.color, isDark),
-                color: catText(cat.color, isDark),
+                background: cat ? catBg(cat.color, isDark) : 'var(--surface-2)',
+                color: cat ? catText(cat.color, isDark) : 'var(--text-2)',
+                cursor: 'pointer',
+                border: '1px solid transparent',
               }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: catDot(cat.color) }} />
-                {cat.name}
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: cat ? catDot(cat.color) : 'var(--border)' }} />
+                {cat?.name ?? 'No Category'}
+                <span style={{ fontSize: 10, marginLeft: 2, opacity: 0.5 }}>▼</span>
               </span>
-            )}
+              <select
+                value={item.categoryId ?? ''}
+                onChange={(e) => onUpdateCategory(item.id, e.target.value || null)}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  opacity: 0,
+                  cursor: 'pointer',
+                  width: '100%',
+                }}
+              >
+                <option value="">No Category</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
             {item.priority && (
               <span style={{
                 display: 'inline-flex',
@@ -331,11 +352,12 @@ export function ItemDetailPanel({
                 textAlign: 'center',
                 color: 'var(--text-2)',
                 fontSize: 13,
-                cursor: 'pointer',
+                cursor: 'default',
                 marginTop: 4,
+                opacity: 0.6,
               }}
             >
-              Drop files here or click to upload
+              Upload (Coming Soon)
             </div>
           </div>
         </div>
