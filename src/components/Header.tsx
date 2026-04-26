@@ -3,19 +3,25 @@ import { Share2, Moon, Sun, Grid2X2, ShoppingBag } from 'lucide-react';
 interface HeaderProps {
   isDark: boolean;
   selectionMode: boolean;
+  isCompact: boolean;
+  listName: string;
   onToggleTheme: () => void;
   onOpenLists: () => void;
   onOpenShare: () => void;
   onToggleSelectionMode: () => void;
+  onToggleCompact: () => void;
 }
 
 export function Header({
   isDark,
   selectionMode,
+  isCompact,
+  listName,
   onToggleTheme,
   onOpenLists,
   onOpenShare,
   onToggleSelectionMode,
+  onToggleCompact,
 }: HeaderProps) {
   return (
     <header
@@ -59,8 +65,20 @@ export function Header({
           <ShoppingBag size={20} strokeWidth={2.5} />
         </button>
 
-        {/* List Name / App Name */}
-        <div style={{ flex: 1, minWidth: 0 }}>
+        {/* List Name / App Name Toggle area */}
+        <div 
+          onClick={onToggleCompact}
+          style={{ 
+            flex: 1, 
+            minWidth: 0, 
+            position: 'relative', 
+            height: 32, 
+            display: 'flex', 
+            alignItems: 'center',
+            cursor: 'pointer',
+            userSelect: 'none'
+          }}
+        >
           <h1 style={{ 
             fontSize: 20, 
             fontWeight: 800, 
@@ -69,9 +87,31 @@ export function Header({
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
-            margin: 0
+            margin: 0,
+            position: 'absolute',
+            opacity: isCompact ? 0 : 1,
+            transform: isCompact ? 'translateY(-12px)' : 'translateY(0)',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            pointerEvents: isCompact ? 'none' : 'auto',
           }}>
             AirList
+          </h1>
+          <h1 style={{ 
+            fontSize: 18, 
+            fontWeight: 700, 
+            letterSpacing: -0.4, 
+            color: 'var(--text)',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            margin: 0,
+            position: 'absolute',
+            opacity: isCompact ? 1 : 0,
+            transform: isCompact ? 'translateY(0)' : 'translateY(12px)',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            pointerEvents: isCompact ? 'auto' : 'none',
+          }}>
+            {listName || "List"}
           </h1>
         </div>
       </div>

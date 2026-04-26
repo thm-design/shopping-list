@@ -51,6 +51,7 @@ const USER_KEY_STORAGE_KEY = 'airlist:userKey';
 const THEME_STORAGE_KEY = 'airlist:theme';
 const SORT_MODE_STORAGE_KEY = 'airlist:sortMode';
 const CURRENT_LIST_STORAGE_KEY = 'airlist:currentListId';
+const COMPACT_MODE_STORAGE_KEY = 'airlist:compact';
 
 const normalizeName = (value?: string | null) => value?.trim().toLowerCase() ?? '';
 
@@ -131,6 +132,19 @@ function AppImpl() {
   } | null>(null);
 
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<Set<string>>(new Set());
+
+  const [isCompact, setIsCompact] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem(COMPACT_MODE_STORAGE_KEY) === 'true';
+  });
+
+  const toggleCompact = useCallback(() => {
+    setIsCompact(prev => {
+      const next = !prev;
+      window.localStorage.setItem(COMPACT_MODE_STORAGE_KEY, String(next));
+      return next;
+    });
+  }, []);
 
   const getOrCreateUserKey = useCallback(() => {
     if (typeof window === 'undefined') return 'anonymous';
@@ -758,6 +772,8 @@ function AppImpl() {
         <Header
           isDark={isDark}
           selectionMode={selectionMode}
+          isCompact={isCompact}
+          listName={currentListName}
           onToggleTheme={toggleTheme}
           onOpenLists={() => setShowLists(prev => !prev)}
           onOpenShare={() => setShowShare(true)}
@@ -765,9 +781,15 @@ function AppImpl() {
             setSelectionMode(prev => !prev);
             if (selectionMode) setSelectedIds(new Set());
           }}
+          onToggleCompact={toggleCompact}
         />
 
-        <ProgressBar doneCount={doneCount} totalCount={totalCount} listName={currentListName} />
+        <ProgressBar 
+          doneCount={doneCount} 
+          totalCount={totalCount} 
+          listName={currentListName} 
+          isCompact={isCompact} 
+        />
 
         {activeTab === 'list' && (
           <div style={{ marginBottom: 12 }}>
