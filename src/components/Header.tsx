@@ -1,26 +1,20 @@
-import { Share2, Moon, Sun, Grid2X2, ShoppingBag } from 'lucide-react';
+import { Moon, Sun, ShoppingBag, User } from 'lucide-react';
 
 interface HeaderProps {
   isDark: boolean;
-  selectionMode: boolean;
   isCompact: boolean;
   listName: string;
   onToggleTheme: () => void;
   onOpenLists: () => void;
-  onOpenShare: () => void;
-  onToggleSelectionMode: () => void;
   onToggleCompact: () => void;
 }
 
 export function Header({
   isDark,
-  selectionMode,
   isCompact,
   listName,
   onToggleTheme,
   onOpenLists,
-  onOpenShare,
-  onToggleSelectionMode,
   onToggleCompact,
 }: HeaderProps) {
   return (
@@ -119,24 +113,6 @@ export function Header({
       {/* Action Buttons */}
       <div style={{ display: 'flex', gap: 6 }}>
         <button
-          onClick={onOpenShare}
-          aria-label="Share"
-          style={{
-            width: 38,
-            height: 38,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: 'var(--r-sm)',
-            background: 'var(--surface-2)',
-            border: 'none',
-            cursor: 'pointer',
-            color: 'var(--text)',
-          }}
-        >
-          <Share2 size={18} />
-        </button>
-        <button
           onClick={onToggleTheme}
           aria-label="Toggle theme"
           style={{
@@ -154,23 +130,26 @@ export function Header({
         >
           {isDark ? <Sun size={18} /> : <Moon size={18} />}
         </button>
+        
+        {/* User Profile Mockup */}
         <button
-          onClick={onToggleSelectionMode}
-          aria-label="Selection mode"
+          aria-label="User profile"
           style={{
             width: 38,
             height: 38,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            borderRadius: 'var(--r-sm)',
-            background: selectionMode ? 'var(--accent-bg)' : 'var(--surface-2)',
-            border: 'none',
+            borderRadius: '50%',
+            background: 'var(--surface-2)',
+            border: '1px solid var(--border)',
             cursor: 'pointer',
-            color: selectionMode ? 'var(--accent-fg)' : 'var(--text)',
+            color: 'var(--text-2)',
+            overflow: 'hidden',
+            padding: 0,
           }}
         >
-          <Grid2X2 size={18} />
+          <User size={20} />
         </button>
       </div>
     </header>

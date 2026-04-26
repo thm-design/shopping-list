@@ -1,6 +1,6 @@
-import { ListTodo, Tag, Sparkles } from 'lucide-react';
+import { ListTodo, Tag, Share2 } from 'lucide-react';
 
-type Tab = 'list' | 'categories' | 'pro';
+type Tab = 'list' | 'categories' | 'share';
 
 interface BottomNavProps {
   activeTab: Tab;
@@ -14,7 +14,7 @@ export { NAV_H };
 const tabs: { key: Tab; label: string; Icon: typeof ListTodo }[] = [
   { key: 'list', label: 'List', Icon: ListTodo },
   { key: 'categories', label: 'Categories', Icon: Tag },
-  { key: 'pro', label: 'Pro', Icon: Sparkles },
+  { key: 'share', label: 'Share', Icon: Share2 },
 ];
 
 export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {

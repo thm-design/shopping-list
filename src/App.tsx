@@ -44,7 +44,7 @@ export type ShoppingList = Schema['ShoppingList']['type'];
 
 type Theme = 'light' | 'dark';
 type SortMode = 'category' | 'custom';
-type Tab = 'list' | 'categories' | 'pro';
+type Tab = 'list' | 'categories' | 'share';
 
 const PREFERENCE_ID_STORAGE_KEY = 'airlist:preferenceId';
 const USER_KEY_STORAGE_KEY = 'airlist:userKey';
@@ -74,6 +74,12 @@ function AppImpl() {
   }, [currentListId]);
 
   const [activeId, setActiveId] = useState<string | null>(null);
+
+  const [toast, setToast] = useState<{ message: string; type?: 'success' | 'error' } | null>(null);
+  const showToast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -602,6 +608,7 @@ function AppImpl() {
           if (prev.some(i => i.id === data.id)) return prev;
           return [...prev, data];
         });
+        showToast(`Added "${data.name}"`);
       }
     } catch (err) {
       console.error("Error creating item:", err);
@@ -665,6 +672,7 @@ function AppImpl() {
           return [...prev, data];
         });
         setCurrentListId(data.id);
+        showToast(`Created list "${data.name}"`);
       }
     } catch (err) {
       console.error("Error creating list:", err);
@@ -690,6 +698,7 @@ function AppImpl() {
         // Delete the list itself
         const { errors } = await client.models.ShoppingList.delete({ id });
         if (!errors) {
+          showToast(`Deleted list "${listName}"`);
           setLists(prev => {
             const next = prev.filter(l => l.id !== id);
             if (currentListId === id) {
@@ -709,6 +718,7 @@ function AppImpl() {
     const { data, errors } = await client.models.ShoppingList.update({ id, name });
     if (!errors && data) {
       setLists(prev => prev.map(l => l.id === id ? data : l));
+      showToast(`Renamed to "${data.name}"`);
     }
   };
 
@@ -737,9 +747,9 @@ function AppImpl() {
         setItems(prev => prev.filter(i => i.id !== id));
         setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next; });
         await client.models.ListItem.delete({ id });
+        showToast(`Deleted "${itemName}"`);
         setDeleteConfirm(null);
-      },
-    });
+      },    });
   };
 
   const handleDeleteSelectedItems = () => {
@@ -761,6 +771,7 @@ function AppImpl() {
     const { data, errors } = await client.models.Category.update({ id, name });
     if (!errors && data) {
       setCategories(prev => prev.map(c => c.id === id ? data : c));
+      showToast(`Renamed category to "${data.name}"`);
     }
   };
 
@@ -775,9 +786,9 @@ function AppImpl() {
         if (selectedCategory === id) setSelectedCategory(null);
         setSelectedCategoryIds(prev => { const next = new Set(prev); next.delete(id); return next; });
         await client.models.Category.delete({ id });
+        showToast(`Deleted category "${catName}"`);
         setDeleteConfirm(null);
-      },
-    });
+      },    });
   };
 
   const handleDeleteSelectedCategories = () => {
@@ -911,16 +922,10 @@ function AppImpl() {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, position: 'relative' }}>
           <Header
             isDark={isDark}
-            selectionMode={selectionMode}
             isCompact={isCompact}
             listName={currentListName}
             onToggleTheme={toggleTheme}
             onOpenLists={isDesktop ? toggleSidebar : () => setShowLists(true)}
-            onOpenShare={() => setShowShare(true)}
-            onToggleSelectionMode={() => {
-              setSelectionMode(prev => !prev);
-              if (selectionMode) setSelectedIds(new Set());
-            }}
             onToggleCompact={toggleCompact}
           />
 
@@ -937,9 +942,14 @@ function AppImpl() {
                 categories={listCategories.map(c => ({ id: c.id, name: c.name ?? '', color: c.color ?? 'gray' }))}
                 selectedCat={selectedCategory}
                 sortMode={sortMode}
+                selectionMode={selectionMode}
                 isDark={isDark}
                 onSelectCat={setSelectedCategory}
                 onToggleSort={() => handleSortModeChange(sortMode === 'category' ? 'custom' : 'category')}
+                onToggleSelectionMode={() => {
+                  setSelectionMode(prev => !prev);
+                  if (selectionMode) setSelectedIds(new Set());
+                }}
                 itemCounts={itemCounts}
                 allItemCount={listItems.length}
               />
@@ -956,80 +966,83 @@ function AppImpl() {
                 modifiers={[restrictToVerticalAxis, restrictToWindowEdges]}
               >
                 <div style={{ padding: '0 14px', paddingBottom: 135, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {selectionMode && (
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '8px 0',
-                    position: 'sticky',
-                    top: 0,
-                    background: 'var(--bg)',
-                    zIndex: 10,
-                  }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)' }}>
-                      {selectedIds.size} selected
-                    </span>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button
-                        onClick={() => {
-                          const allIds = filteredItems.map(i => i.id);
-                          const allSelected = allIds.length > 0 && allIds.every(id => selectedIds.has(id));
-                          if (allSelected) {
-                            setSelectedIds(new Set());
-                          } else {
-                            setSelectedIds(new Set(allIds));
-                          }
-                        }}
-                        style={{
-                          fontSize: 12,
-                          fontWeight: 600,
-                          padding: '6px 12px',
-                          borderRadius: 'var(--r-sm)',
-                          background: 'var(--surface-2)',
-                          border: 'none',
-                          cursor: 'pointer',
-                          color: 'var(--text)',
-                        }}
-                      >
-                        {filteredItems.length > 0 && selectedIds.size >= filteredItems.length ? 'Deselect All' : 'Select All'}
-                      </button>
-                      <button
-                        onClick={handleDeleteSelectedItems}
-                        disabled={selectedIds.size === 0}
-                        style={{
-                          fontSize: 12,
-                          fontWeight: 600,
-                          padding: '6px 12px',
-                          borderRadius: 'var(--r-sm)',
-                          background: 'var(--danger)',
-                          border: 'none',
-                          cursor: selectedIds.size === 0 ? 'not-allowed' : 'pointer',
-                          color: '#fff',
-                          opacity: selectedIds.size === 0 ? 0.5 : 1,
-                        }}
-                      >
-                        Delete
-                      </button>
-                      <button
-                        onClick={() => { setSelectionMode(false); setSelectedIds(new Set()); }}
-                        style={{
-                          fontSize: 12,
-                          fontWeight: 600,
-                          padding: '6px 12px',
-                          borderRadius: 'var(--r-sm)',
-                          background: 'var(--surface-2)',
-                          border: 'none',
-                          cursor: 'pointer',
-                          color: 'var(--text)',
-                        }}
-                      >
-                        Cancel
-                      </button>
+                  {selectionMode && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '10px 12px',
+                      position: 'sticky',
+                      top: 0,
+                      background: 'var(--surface)',
+                      borderRadius: 'var(--r-md)',
+                      border: '1px solid var(--border)',
+                      boxShadow: '0 4px 12px oklch(0% 0 0 / 0.1)',
+                      zIndex: 10,
+                      marginBottom: 4,
+                    }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>
+                        {selectedIds.size} selected
+                      </span>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button
+                          onClick={() => {
+                            const allIds = filteredItems.map(i => i.id);
+                            const allSelected = allIds.length > 0 && allIds.every(id => selectedIds.has(id));
+                            if (allSelected) {
+                              setSelectedIds(new Set());
+                            } else {
+                              setSelectedIds(new Set(allIds));
+                            }
+                          }}
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 600,
+                            padding: '6px 12px',
+                            borderRadius: 'var(--r-xs)',
+                            background: 'var(--surface-2)',
+                            border: '1px solid var(--border)',
+                            cursor: 'pointer',
+                            color: 'var(--text)',
+                          }}
+                        >
+                          {filteredItems.length > 0 && selectedIds.size >= filteredItems.length ? 'Deselect All' : 'Select All'}
+                        </button>
+                        <button
+                          onClick={handleDeleteSelectedItems}
+                          disabled={selectedIds.size === 0}
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 700,
+                            padding: '6px 12px',
+                            borderRadius: 'var(--r-xs)',
+                            background: 'oklch(60% 0.2 25)',
+                            border: '1px solid oklch(50% 0.2 25)',
+                            cursor: selectedIds.size === 0 ? 'not-allowed' : 'pointer',
+                            color: '#fff',
+                            opacity: selectedIds.size === 0 ? 0.5 : 1,
+                          }}
+                        >
+                          Delete
+                        </button>
+                        <button
+                          onClick={() => { setSelectionMode(false); setSelectedIds(new Set()); }}
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 600,
+                            padding: '6px 12px',
+                            borderRadius: 'var(--r-xs)',
+                            background: 'var(--surface-2)',
+                            border: '1px solid var(--border)',
+                            cursor: 'pointer',
+                            color: 'var(--text)',
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )}
-
+                  )}
                 {filteredItems.length === 0 && !selectionMode && (
                   <div style={{
                     display: 'flex',
@@ -1292,13 +1305,6 @@ function AppImpl() {
               </div>
             </div>
           )}
-
-          {activeTab === 'pro' && (
-            <div style={{ padding: '40px 14px', textAlign: 'center', opacity: 0.5 }}>
-              <p style={{ fontSize: 16, fontWeight: 600 }}>Pro features coming soon</p>
-              <p style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 8 }}>Shared lists, smart suggestions, and more.</p>
-            </div>
-          )}
         </main>
 
         {activeTab === 'list' && currentListId && (
@@ -1313,7 +1319,13 @@ function AppImpl() {
           />
         )}
 
-        <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+        <BottomNav activeTab={activeTab} onTabChange={(tab) => {
+          if (tab === 'share') {
+            setShowShare(true);
+          } else {
+            setActiveTab(tab);
+          }
+        }} />
         </div>
 
         {!isDesktop && showLists && (
@@ -1388,6 +1400,39 @@ function AppImpl() {
             onUpdateQuantity={handleUpdateQuantity}
             onDelete={(id) => { setDetailItemId(null); handleDeleteItem(id); }}
           />
+        )}
+
+        {/* Toast Notification */}
+        {toast && (
+          <div
+            style={{
+              position: 'fixed',
+              bottom: 80,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: 'var(--surface)',
+              padding: '10px 20px',
+              borderRadius: 'var(--r-full)',
+              border: '1px solid var(--border)',
+              boxShadow: '0 8px 30px oklch(0% 0 0 / 0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              zIndex: 100,
+              animation: 'slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              fontSize: 14,
+              fontWeight: 600,
+              color: 'var(--text)',
+            }}
+          >
+            <div style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: toast.type === 'error' ? 'oklch(60% 0.2 25)' : 'oklch(65% 0.15 145)',
+            }} />
+            {toast.message}
+          </div>
         )}
       </div>
     </ThemeContext.Provider>

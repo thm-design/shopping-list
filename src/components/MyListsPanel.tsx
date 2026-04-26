@@ -1,5 +1,5 @@
-import { X, Plus, Check, Edit2, Trash2, ListPlus, GripVertical } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { X, Plus, Check, Edit2, Trash2, ListPlus, GripVertical, ArrowUpDown } from 'lucide-react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -22,6 +22,7 @@ interface ShoppingList {
   id: string;
   name: string;
   itemCount?: number;
+  createdAt?: string;
 }
 
 interface MyListsPanelProps {
@@ -36,6 +37,8 @@ interface MyListsPanelProps {
   isDark: boolean;
   isStatic?: boolean;
 }
+
+type ListSortMode = 'custom' | 'alphabetical' | 'date';
 
 interface SortableListRowProps {
   list: ShoppingList;
@@ -52,12 +55,16 @@ interface SortableListRowProps {
   loadingAction: string | null;
   editInputRef: React.RefObject<HTMLInputElement>;
   listsCount: number;
+  isSortable: boolean;
 }
 
 function SortableListRow({ 
-  list, isActive, isEditing, editName, setEditName, saveEdit, startEditing, onSelectList, onClose, onDeleteList, withLoading, loadingAction, editInputRef, listsCount 
+  list, isActive, isEditing, editName, setEditName, saveEdit, startEditing, onSelectList, onClose, onDeleteList, withLoading, loadingAction, editInputRef, listsCount, isSortable 
 }: SortableListRowProps) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: list.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ 
+    id: list.id,
+    disabled: !isSortable 
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -76,7 +83,14 @@ function SortableListRow({
       <div 
         {...attributes} 
         {...listeners} 
-        style={{ paddingLeft: 12, cursor: 'grab', color: 'var(--text-2)', display: 'flex', alignItems: 'center' }}
+        style={{ 
+          paddingLeft: 12, 
+          cursor: isSortable ? 'grab' : 'default', 
+          color: isSortable ? 'var(--text-2)' : 'transparent', 
+          display: 'flex', 
+          alignItems: 'center',
+          pointerEvents: isSortable ? 'auto' : 'none' 
+        }}
       >
         <GripVertical size={14} />
       </div>
@@ -214,6 +228,7 @@ export function MyListsPanel({
   const [editingListId, setEditingListId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
+  const [listSortMode, setListSortMode] = useState<ListSortMode>('custom');
   const editInputRef = useRef<HTMLInputElement>(null);
 
   const sensors = useSensors(
@@ -261,9 +276,23 @@ export function MyListsPanel({
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id && onReorderLists) {
+      if (listSortMode !== 'custom') {
+        setListSortMode('custom');
+      }
       onReorderLists(active.id as string, over.id as string);
     }
   };
+
+  const sortedLists = useMemo(() => {
+    const result = [...lists];
+    if (listSortMode === 'alphabetical') {
+      return result.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    }
+    if (listSortMode === 'date') {
+      return result.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    }
+    return result;
+  }, [lists, listSortMode]);
 
   useEffect(() => {
     if (editingListId && editInputRef.current) {
@@ -333,8 +362,33 @@ export function MyListsPanel({
             </button>
         </div>
 
-        <div style={{ padding: '20px 20px 10px' }}>
+        <div style={{ padding: '20px 20px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <h2 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>My Lists</h2>
+          
+          <button
+            onClick={() => {
+              const modes: ListSortMode[] = ['custom', 'alphabetical', 'date'];
+              const next = modes[(modes.indexOf(listSortMode) + 1) % modes.length];
+              setListSortMode(next);
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '4px 8px',
+              borderRadius: 'var(--r-sm)',
+              background: 'var(--surface-2)',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: 10,
+              fontWeight: 700,
+              color: 'var(--text-2)',
+              textTransform: 'uppercase',
+            }}
+          >
+            <ArrowUpDown size={12} />
+            {listSortMode}
+          </button>
         </div>
 
         <div style={{ flex: 1, overflowY: 'auto' }}>
@@ -345,10 +399,10 @@ export function MyListsPanel({
             modifiers={[restrictToVerticalAxis, restrictToWindowEdges]}
           >
             <SortableContext
-              items={lists.map(l => l.id)}
+              items={sortedLists.map(l => l.id)}
               strategy={verticalListSortingStrategy}
             >
-              {lists.map((list) => (
+              {sortedLists.map((list) => (
                 <SortableListRow
                   key={list.id}
                   list={list}
@@ -365,6 +419,7 @@ export function MyListsPanel({
                   loadingAction={loadingAction}
                   editInputRef={editInputRef}
                   listsCount={lists.length}
+                  isSortable={listSortMode === 'custom'}
                 />
               ))}
             </SortableContext>
