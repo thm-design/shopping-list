@@ -44,6 +44,7 @@ interface ItemDetailPanelProps {
   onAddSubtask: (itemId: string, name: string) => void;
   onDeleteSubtask: (itemId: string, subtaskId: string) => void;
   onUpdateCategory: (itemId: string, categoryId: string | null) => void;
+  onAddCategory: (name: string, color: string) => Promise<{ id: string } | null>;
   onUpdateQuantity: (id: string, quantity: number) => void;
   onDelete: (id: string) => void;
 }
@@ -61,12 +62,15 @@ export function ItemDetailPanel({
   onAddSubtask,
   onDeleteSubtask,
   onUpdateCategory,
+  onAddCategory,
   onUpdateQuantity,
   onDelete,
 }: ItemDetailPanelProps) {
   const [editName, setEditName] = useState(item?.name ?? '');
   const [editNotes, setEditNotes] = useState(item?.notes ?? '');
   const [newSubtask, setNewSubtask] = useState('');
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [showAddCategory, setShowAddCategory] = useState(false);
   const [prevItemId, setPrevItemId] = useState(item?.id ?? '');
   const nameInputRef = useRef<HTMLInputElement>(null);
 
@@ -137,6 +141,17 @@ export function ItemDetailPanel({
   const subtaskDone = item.subtasks.filter((s) => s.done).length;
   const subtaskTotal = item.subtasks.length;
   const subtaskPct = subtaskTotal > 0 ? (subtaskDone / subtaskTotal) * 100 : 0;
+
+  const handleAddNewCategory = async () => {
+    const trimmed = newCategoryName.trim();
+    if (!trimmed) return;
+    const newCat = await onAddCategory(trimmed, 'gray');
+    if (newCat) {
+      onUpdateCategory(item.id, newCat.id);
+      setNewCategoryName('');
+      setShowAddCategory(false);
+    }
+  };
 
   return (
     <>
@@ -239,41 +254,121 @@ export function ItemDetailPanel({
           />
 
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 18 }}>
-            <div style={{ position: 'relative' }}>
-              <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
-                padding: '6px 14px',
-                borderRadius: 'var(--r-sm)',
-                fontSize: 13,
-                fontWeight: 600,
-                background: cat ? catBg(cat.color, isDark) : 'var(--surface-2)',
-                color: cat ? catText(cat.color, isDark) : 'var(--text-2)',
-                cursor: 'pointer',
-                border: '1px solid transparent',
-              }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: cat ? catDot(cat.color) : 'var(--border)' }} />
-                {cat?.name ?? 'No Category'}
-                <span style={{ fontSize: 10, marginLeft: 2, opacity: 0.5 }}>▼</span>
-              </span>
-              <select
-                value={item.categoryId ?? ''}
-                onChange={(e) => onUpdateCategory(item.id, e.target.value || null)}
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  opacity: 0,
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <div style={{ position: 'relative' }}>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  padding: '6px 14px',
+                  borderRadius: 'var(--r-sm)',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  background: cat ? catBg(cat.color, isDark) : 'var(--surface-2)',
+                  color: cat ? catText(cat.color, isDark) : 'var(--text-2)',
                   cursor: 'pointer',
-                  width: '100%',
+                  border: '1px solid transparent',
+                }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: cat ? catDot(cat.color) : 'var(--border)' }} />
+                  {cat?.name ?? 'No Category'}
+                  <span style={{ fontSize: 10, marginLeft: 2, opacity: 0.5 }}>▼</span>
+                </span>
+                <select
+                  value={item.categoryId ?? ''}
+                  onChange={(e) => onUpdateCategory(item.id, e.target.value || null)}
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    opacity: 0,
+                    cursor: 'pointer',
+                    width: '100%',
+                  }}
+                >
+                  <option value="">No Category</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+              
+              {cat && (
+                <button
+                  onClick={() => onUpdateCategory(item.id, null)}
+                  style={{
+                    background: 'var(--surface-2)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: 20,
+                    height: 20,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: 'var(--text-2)',
+                  }}
+                  aria-label="Remove category"
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </div>
+
+            {showAddCategory ? (
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <input
+                  type="text"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleAddNewCategory();
+                    if (e.key === 'Escape') setShowAddCategory(false);
+                  }}
+                  placeholder="New category..."
+                  autoFocus
+                  style={{
+                    fontSize: 13,
+                    padding: '6px 10px',
+                    borderRadius: 'var(--r-sm)',
+                    background: 'var(--surface-2)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text)',
+                    outline: 'none',
+                    width: 120,
+                  }}
+                />
+                <button 
+                  onClick={handleAddNewCategory}
+                  style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer' }}
+                >
+                  Add
+                </button>
+                <button 
+                  onClick={() => setShowAddCategory(false)}
+                  style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', background: 'none', border: 'none', cursor: 'pointer' }}
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowAddCategory(true)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  padding: '6px 14px',
+                  borderRadius: 'var(--r-sm)',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  background: 'transparent',
+                  color: 'var(--text-2)',
+                  cursor: 'pointer',
+                  border: '1.5px dashed var(--border)',
                 }}
               >
-                <option value="">No Category</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            </div>
+                <Plus size={14} /> Category
+              </button>
+            )}
             {item.priority && (
               <span style={{
                 display: 'inline-flex',

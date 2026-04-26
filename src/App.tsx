@@ -148,6 +148,32 @@ function AppImpl() {
     return window.localStorage.getItem(COMPACT_MODE_STORAGE_KEY) === 'true';
   });
 
+  const [isDesktop, setIsDesktop] = useState(() => 
+    typeof window !== 'undefined' ? window.matchMedia('(min-width: 1024px)').matches : false
+  );
+
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 1024px)');
+    const listener = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    media.addEventListener('change', listener);
+    return () => media.removeEventListener('change', listener);
+  }, []);
+
+  const SIDEBAR_OPEN_STORAGE_KEY = 'airlist:sidebarOpen';
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    const stored = window.localStorage.getItem(SIDEBAR_OPEN_STORAGE_KEY);
+    return stored === null ? true : stored === 'true';
+  });
+
+  const toggleSidebar = useCallback(() => {
+    setIsSidebarOpen(prev => {
+      const next = !prev;
+      window.localStorage.setItem(SIDEBAR_OPEN_STORAGE_KEY, String(next));
+      return next;
+    });
+  }, []);
+
   const toggleCompact = useCallback(() => {
     setIsCompact(prev => {
       const next = !prev;
@@ -584,17 +610,19 @@ function AppImpl() {
 
   const handleAddCategory = async (name: string, color: CatColorName, listId?: string) => {
     const trimmed = name.trim();
-    if (!trimmed) return;
+    if (!trimmed) return null;
 
     const targetListId = listId ?? currentListId;
-    if (!targetListId) return;
+    if (!targetListId) return null;
 
     // Check if category exists IN THE TARGET LIST
     const normalizedInput = normalizeName(trimmed);
     const categoryExists = categories.some(
       cat => cat.listId === targetListId && normalizeName(cat.name) === normalizedInput
     );
-    if (categoryExists) return;
+    if (categoryExists) {
+      return categories.find(cat => cat.listId === targetListId && normalizeName(cat.name) === normalizedInput) || null;
+    }
 
     try {
       const { data, errors } = await client.models.Category.create({
@@ -604,17 +632,19 @@ function AppImpl() {
       });
       if (errors) {
         console.error("Failed to create category:", errors);
-        return;
+        return null;
       }
       if (data) {
         setCategories(prev => {
           if (prev.some(c => c.id === data.id)) return prev;
           return [...prev, data].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
         });
+        return data;
       }
     } catch (err) {
       console.error("Error creating category:", err);
     }
+    return null;
   };
 
   const handleAddList = async (name: string) => {
@@ -680,6 +710,22 @@ function AppImpl() {
     if (!errors && data) {
       setLists(prev => prev.map(l => l.id === id ? data : l));
     }
+  };
+
+  const handleReorderLists = async (sourceId: string, targetId: string) => {
+    const sourceIndex = lists.findIndex(l => l.id === sourceId);
+    const targetIndex = lists.findIndex(l => l.id === targetId);
+
+    if (sourceIndex === -1 || targetIndex === -1) return;
+
+    const newListsOrder = arrayMove(lists, sourceIndex, targetIndex);
+    const updatedLists = newListsOrder.map((list, index) => ({ ...list, sortOrder: index }));
+
+    setLists(updatedLists);
+
+    await Promise.all(
+      updatedLists.map(l => client.models.ShoppingList.update({ id: l.id, sortOrder: l.sortOrder }))
+    );
   };
 
   const handleDeleteItem = (id: string) => {
@@ -836,60 +882,80 @@ function AppImpl() {
         style={{
           height: '100dvh',
           display: 'flex',
-          flexDirection: 'column',
+          flexDirection: 'row',
           overflow: 'hidden',
           background: 'var(--bg)',
           color: 'var(--text)',
           fontFamily: 'var(--font)',
         }}
       >
-        <Header
-          isDark={isDark}
-          selectionMode={selectionMode}
-          isCompact={isCompact}
-          listName={currentListName}
-          onToggleTheme={toggleTheme}
-          onOpenLists={() => setShowLists(prev => !prev)}
-          onOpenShare={() => setShowShare(true)}
-          onToggleSelectionMode={() => {
-            setSelectionMode(prev => !prev);
-            if (selectionMode) setSelectedIds(new Set());
-          }}
-          onToggleCompact={toggleCompact}
-        />
-
-        <ProgressBar 
-          doneCount={doneCount} 
-          totalCount={totalCount} 
-          listName={currentListName} 
-          isCompact={isCompact} 
-        />
-
-        {activeTab === 'list' && (
-          <div style={{ marginBottom: 12 }}>
-            <CategoryFilterBar
-              categories={listCategories.map(c => ({ id: c.id, name: c.name ?? '', color: c.color ?? 'gray' }))}
-              selectedCat={selectedCategory}
-              sortMode={sortMode}
-              isDark={isDark}
-              onSelectCat={setSelectedCategory}
-              onToggleSort={() => handleSortModeChange(sortMode === 'category' ? 'custom' : 'category')}
-              itemCounts={itemCounts}
-              allItemCount={listItems.length}
-            />
-          </div>
+        {isDesktop && isSidebarOpen && (
+          < MyListsPanel
+            lists={lists.map(l => ({
+              id: l.id,
+              name: l.name ?? '',
+              itemCount: items.filter(i => i.listId === l.id).length,
+            }))}
+            currentListId={currentListId ?? ''}
+            onSelectList={(id) => { setCurrentListId(id); setSelectedCategory(null); }}
+            onClose={toggleSidebar}
+            onAddList={handleAddList}
+            onDeleteList={handleDeleteList}
+            onUpdateListName={handleUpdateListName}
+            onReorderLists={handleReorderLists}
+            isDark={isDark}
+            isStatic
+          />
         )}
 
-        <main style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }} className="custom-scrollbar">
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, position: 'relative' }}>
+          <Header
+            isDark={isDark}
+            selectionMode={selectionMode}
+            isCompact={isCompact}
+            listName={currentListName}
+            onToggleTheme={toggleTheme}
+            onOpenLists={isDesktop ? toggleSidebar : () => setShowLists(true)}
+            onOpenShare={() => setShowShare(true)}
+            onToggleSelectionMode={() => {
+              setSelectionMode(prev => !prev);
+              if (selectionMode) setSelectedIds(new Set());
+            }}
+            onToggleCompact={toggleCompact}
+          />
+
+          <ProgressBar 
+            doneCount={doneCount} 
+            totalCount={totalCount} 
+            listName={currentListName} 
+            isCompact={isCompact} 
+          />
+
           {activeTab === 'list' && (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-              modifiers={[restrictToVerticalAxis, restrictToWindowEdges]}
-            >
-              <div style={{ padding: '0 14px', paddingBottom: 160, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ marginBottom: 12 }}>
+              <CategoryFilterBar
+                categories={listCategories.map(c => ({ id: c.id, name: c.name ?? '', color: c.color ?? 'gray' }))}
+                selectedCat={selectedCategory}
+                sortMode={sortMode}
+                isDark={isDark}
+                onSelectCat={setSelectedCategory}
+                onToggleSort={() => handleSortModeChange(sortMode === 'category' ? 'custom' : 'category')}
+                itemCounts={itemCounts}
+                allItemCount={listItems.length}
+              />
+            </div>
+          )}
+
+          <main style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }} className="custom-scrollbar">
+            {activeTab === 'list' && (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                modifiers={[restrictToVerticalAxis, restrictToWindowEdges]}
+              >
+                <div style={{ padding: '0 14px', paddingBottom: 220, display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {selectionMode && (
                   <div style={{
                     display: 'flex',
@@ -1248,8 +1314,9 @@ function AppImpl() {
         )}
 
         <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+        </div>
 
-        {showLists && (
+        {!isDesktop && showLists && (
           < MyListsPanel
             lists={lists.map(l => ({
               id: l.id,
@@ -1262,6 +1329,7 @@ function AppImpl() {
             onAddList={handleAddList}
             onDeleteList={handleDeleteList}
             onUpdateListName={handleUpdateListName}
+            onReorderLists={handleReorderLists}
             isDark={isDark}
           />
         )}
@@ -1316,6 +1384,7 @@ function AppImpl() {
             onAddSubtask={handleAddSubtask}
             onDeleteSubtask={handleDeleteSubtask}
             onUpdateCategory={(itemId, categoryId) => updateItem(itemId, { categoryId })}
+            onAddCategory={(name) => handleAddCategory(name, 'gray')}
             onUpdateQuantity={handleUpdateQuantity}
             onDelete={(id) => { setDetailItemId(null); handleDeleteItem(id); }}
           />

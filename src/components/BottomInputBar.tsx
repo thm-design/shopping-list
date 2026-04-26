@@ -101,6 +101,9 @@ export function BottomInputBar({
             marginBottom: 8,
             padding: '12px 14px',
             animation: 'slideUp 0.18s ease-out',
+            maxHeight: 'calc(100dvh - 120px)',
+            overflowY: 'auto',
+            overscrollBehavior: 'contain',
           }}
         >
           {/* List picker */}
@@ -254,9 +257,6 @@ export function BottomInputBar({
           gap: 8,
           padding: '10px 12px',
           background: 'var(--surface)',
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-          backgroundColor: isDark ? 'oklch(15% 0.01 240 / 0.85)' : 'oklch(100% 0 0 / 0.85)',
           borderRadius: 'var(--r-lg)',
           border: '1px solid var(--border)',
           boxShadow: '0 4px 20px oklch(0% 0 0 / 0.10)',
