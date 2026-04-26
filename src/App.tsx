@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, createContext } from 'react';
+import { useState, useEffect, useMemo, useCallback, createContext, useRef } from 'react';
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "../amplify/data/resource";
 
@@ -68,6 +68,11 @@ function AppImpl() {
     if (typeof window === 'undefined') return null;
     return window.localStorage.getItem(CURRENT_LIST_STORAGE_KEY);
   });
+  const currentListIdRef = useRef(currentListId);
+  useEffect(() => {
+    currentListIdRef.current = currentListId;
+  }, [currentListId]);
+
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
@@ -102,7 +107,11 @@ function AppImpl() {
   });
   const isDark = theme === 'dark';
   const toggleTheme = useCallback(() => {
-    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+    setTheme(prev => {
+      const next = prev === 'dark' ? 'light' : 'dark';
+      window.localStorage.setItem(THEME_STORAGE_KEY, next);
+      return next;
+    });
   }, []);
 
   const [sortMode, setSortMode] = useState<SortMode>(() => {
@@ -114,6 +123,7 @@ function AppImpl() {
   const [preference, setPreference] = useState<UserPreference | null>(null);
   const handleSortModeChange = useCallback((mode: SortMode) => {
     setSortMode(mode);
+    window.localStorage.setItem(SORT_MODE_STORAGE_KEY, mode);
   }, []);
 
   const [activeTab, setActiveTab] = useState<Tab>('list');
@@ -353,7 +363,7 @@ function AppImpl() {
         if (isMounted) {
           const deletedId = (data as ShoppingList).id;
           setLists(prev => prev.filter(l => l.id !== deletedId));
-          if (currentListId === deletedId) {
+          if (currentListIdRef.current === deletedId) {
             setCurrentListId(() => {
               const remaining = lists.filter(l => l.id !== deletedId);
               return remaining.length > 0 ? remaining[0].id : null;
@@ -371,6 +381,8 @@ function AppImpl() {
           const normalized = normalizeName(incoming.name);
           setCategories(prev => {
             if (prev.some(c => c.id === incoming.id)) return prev;
+            // Only add if it's for the CURRENT list to avoid confusion, 
+            // though keeping all categories in state is generally fine.
             const key = `${incoming.listId ?? ''}:${normalized}`;
             if (prev.some(c => `${c.listId ?? ''}:${normalizeName(c.name)}` === key)) return prev;
             return [...prev, incoming].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
@@ -533,8 +545,9 @@ function AppImpl() {
     const trimmed = name.trim();
     if (!trimmed) return;
 
-    const catId = categoryId ?? (listCategories.length > 0 ? listCategories[0].id : undefined);
-    if (!catId) return;
+    // Use explicit categoryId if provided, otherwise check listCategories. 
+    // If no categories exist, catId will be null/undefined which is fine for the schema.
+    const catId = categoryId ?? (listCategories.length > 0 ? listCategories[0].id : null);
 
     const normalizedName = trimmed.toLowerCase();
     const itemExists = listItems.some(
@@ -544,7 +557,7 @@ function AppImpl() {
 
     const payload = {
       name: trimmed,
-      categoryId: catId,
+      categoryId: catId ?? undefined,
       listId,
       quantity: 1,
       isCompleted: false,
@@ -552,38 +565,79 @@ function AppImpl() {
       priority: false,
     };
 
-    const { data } = await client.models.ListItem.create(payload);
-    if (data) setItems(prev => [...prev, data]);
+    try {
+      const { data, errors } = await client.models.ListItem.create(payload);
+      if (errors) {
+        console.error("Failed to create item:", errors);
+        return;
+      }
+      if (data) {
+        setItems(prev => {
+          if (prev.some(i => i.id === data.id)) return prev;
+          return [...prev, data];
+        });
+      }
+    } catch (err) {
+      console.error("Error creating item:", err);
+    }
   };
 
-  const handleAddCategory = async (name: string, color: CatColorName) => {
+  const handleAddCategory = async (name: string, color: CatColorName, listId?: string) => {
     const trimmed = name.trim();
     if (!trimmed) return;
 
+    const targetListId = listId ?? currentListId;
+    if (!targetListId) return;
+
+    // Check if category exists IN THE TARGET LIST
     const normalizedInput = normalizeName(trimmed);
-    const categoryExists = listCategories.some(cat => normalizeName(cat.name) === normalizedInput);
+    const categoryExists = categories.some(
+      cat => cat.listId === targetListId && normalizeName(cat.name) === normalizedInput
+    );
     if (categoryExists) return;
 
-    const { data } = await client.models.Category.create({
-      name: trimmed,
-      color,
-      listId: currentListId ?? undefined,
-    });
-    if (data) {
-      setCategories(prev => [...prev, data].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '')));
+    try {
+      const { data, errors } = await client.models.Category.create({
+        name: trimmed,
+        color,
+        listId: targetListId,
+      });
+      if (errors) {
+        console.error("Failed to create category:", errors);
+        return;
+      }
+      if (data) {
+        setCategories(prev => {
+          if (prev.some(c => c.id === data.id)) return prev;
+          return [...prev, data].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
+        });
+      }
+    } catch (err) {
+      console.error("Error creating category:", err);
     }
   };
 
   const handleAddList = async (name: string) => {
     const userKey = getOrCreateUserKey();
-    const { data } = await client.models.ShoppingList.create({
-      name,
-      userKey,
-      sortOrder: lists.length,
-    });
-    if (data) {
-      setLists(prev => [...prev, data]);
-      setCurrentListId(data.id);
+    try {
+      const { data, errors } = await client.models.ShoppingList.create({
+        name,
+        userKey,
+        sortOrder: lists.length,
+      });
+      if (errors) {
+        console.error("Failed to create list:", errors);
+        return;
+      }
+      if (data) {
+        setLists(prev => {
+          if (prev.some(l => l.id === data.id)) return prev;
+          return [...prev, data];
+        });
+        setCurrentListId(data.id);
+      }
+    } catch (err) {
+      console.error("Error creating list:", err);
     }
   };
 
@@ -657,6 +711,13 @@ function AppImpl() {
     });
   };
 
+  const handleUpdateCategoryName = async (id: string, name: string) => {
+    const { data, errors } = await client.models.Category.update({ id, name });
+    if (!errors && data) {
+      setCategories(prev => prev.map(c => c.id === id ? data : c));
+    }
+  };
+
   const handleDeleteCategory = (id: string) => {
     const cat = categories.find(c => c.id === id);
     const catName = cat?.name ?? 'this category';
@@ -713,26 +774,31 @@ function AppImpl() {
   };
 
   const handleReorder = async (sourceId: string, targetId: string) => {
-    if (sortMode !== 'custom') handleSortModeChange('custom');
-    
-    const sourceIndex = listItems.findIndex(i => i.id === sourceId);
-    const targetIndex = listItems.findIndex(i => i.id === targetId);
-    
+    if (sortMode !== 'custom') {
+      setSortMode('custom');
+      window.localStorage.setItem(SORT_MODE_STORAGE_KEY, 'custom');
+    }
+
+    const sourceIndex = filteredItems.findIndex(i => i.id === sourceId);
+    const targetIndex = filteredItems.findIndex(i => i.id === targetId);
+
     if (sourceIndex === -1 || targetIndex === -1) return;
 
-    const newItemsOrder = arrayMove(listItems, sourceIndex, targetIndex);
-    const updatedItems = newItemsOrder.map((item, index) => ({ ...item, sortOrder: index }));
+    // Create a new order based on filteredItems (the visual list)
+    const newFilteredOrder = arrayMove(filteredItems, sourceIndex, targetIndex);
+    const updatedItems = newFilteredOrder.map((item, index) => ({ ...item, sortOrder: index }));
 
     setItems(prev => {
-      const otherListItems = prev.filter(i => i.listId !== currentListId);
-      return [...otherListItems, ...updatedItems];
+      // Find items NOT in the filtered list (from other lists or filtered out)
+      const filteredIds = new Set(filteredItems.map(i => i.id));
+      const otherItems = prev.filter(i => !filteredIds.has(i.id));
+      return [...otherItems, ...updatedItems];
     });
 
     await Promise.all(
       updatedItems.map(item => client.models.ListItem.update({ id: item.id, sortOrder: item.sortOrder }))
     );
   };
-
   const handleToggleSubtask = async (itemId: string, subtaskId: string) => {
     const item = items.find(i => i.id === itemId);
     if (!item) return;
@@ -745,7 +811,7 @@ function AppImpl() {
     const item = items.find(i => i.id === itemId);
     if (!item) return;
     const subtasks: { id: string; name: string; done: boolean }[] = Array.isArray(item.subtasks) ? item.subtasks : [];
-    const updated = [...subtasks, { id: crypto.randomUUID(), name, done: false }];
+    const updated = [...subtasks, { id: Math.random().toString(36).slice(2, 11), name, done: false }];
     await updateItem(itemId, { subtasks: updated });
   };
 
@@ -1107,7 +1173,33 @@ function AppImpl() {
                         borderRadius: 3,
                         background: catDot(cat.color ?? 'gray'),
                       }} />
-                      <span style={{ fontWeight: 500, fontSize: 14 }}>{cat.name}</span>
+                      <input
+                        type="text"
+                        defaultValue={cat.name ?? ''}
+                        onBlur={(e) => {
+                          const newName = e.target.value.trim();
+                          if (newName && newName !== cat.name) {
+                            handleUpdateCategoryName(cat.id, newName);
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            (e.target as HTMLInputElement).blur();
+                          }
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          outline: 'none',
+                          fontSize: 14,
+                          fontWeight: 500,
+                          color: 'var(--text)',
+                          padding: '2px 4px',
+                          borderRadius: 4,
+                          width: '100%',
+                        }}
+                      />
                     </div>
                     <button
                       onClick={(e) => { e.stopPropagation(); handleDeleteCategory(cat.id); }}
@@ -1147,7 +1239,7 @@ function AppImpl() {
           <BottomInputBar
             lists={lists.map(l => ({ id: l.id, name: l.name ?? '' }))}
             currentListId={currentListId}
-            categories={listCategories.map(c => ({ id: c.id, name: c.name ?? '', color: c.color ?? 'gray' }))}
+            allCategories={categories.map(c => ({ id: c.id, name: c.name ?? '', color: c.color ?? 'gray', listId: c.listId }))}
             isDark={isDark}
             onAddItem={handleAddItem}
             onAddCategory={handleAddCategory}
@@ -1224,6 +1316,7 @@ function AppImpl() {
             onAddSubtask={handleAddSubtask}
             onDeleteSubtask={handleDeleteSubtask}
             onUpdateCategory={(itemId, categoryId) => updateItem(itemId, { categoryId })}
+            onUpdateQuantity={handleUpdateQuantity}
             onDelete={(id) => { setDetailItemId(null); handleDeleteItem(id); }}
           />
         )}

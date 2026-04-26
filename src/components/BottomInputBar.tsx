@@ -1,22 +1,22 @@
-import { useState, useEffect } from 'react';
-import { Plus, ArrowRight } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { ListPlus, ArrowRight } from 'lucide-react';
 import { catDot, catBg, catText, CAT_COLOR_NAMES, type CatColorName } from '../lib/categoryColors';
 import { NAV_H } from './BottomNav';
 
 interface BottomInputBarProps {
   lists: { id: string; name: string }[];
   currentListId: string;
-  categories: { id: string; name: string; color: string }[];
+  allCategories: { id: string; name: string; color: string; listId?: string | null }[];
   isDark: boolean;
   onAddItem: (name: string, listId: string, categoryId: string | null) => void;
-  onAddCategory: (name: string, color: CatColorName) => void;
+  onAddCategory: (name: string, color: CatColorName, listId: string) => void;
   selectionMode: boolean;
 }
 
 export function BottomInputBar({
   lists,
   currentListId,
-  categories,
+  allCategories,
   isDark,
   onAddItem,
   onAddCategory,
@@ -26,10 +26,13 @@ export function BottomInputBar({
   const [focused, setFocused] = useState(false);
   const [selectedListId, setSelectedListId] = useState(currentListId);
   const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
+  
+  const isSubmitting = useRef(false);
 
   useEffect(() => {
     setSelectedListId(currentListId);
   }, [currentListId]);
+  
   const [showAddCat, setShowAddCat] = useState(false);
   const [newCatName, setNewCatName] = useState('');
   const [newCatColor, setNewCatColor] = useState<CatColorName>('gray');
@@ -37,9 +40,13 @@ export function BottomInputBar({
 
   if (selectionMode) return null;
 
+  const categories = allCategories.filter(c => c.listId === selectedListId);
+
   const handleSubmit = async () => {
     const trimmed = text.trim();
-    if (!trimmed || loading) return;
+    if (!trimmed || loading || isSubmitting.current) return;
+    
+    isSubmitting.current = true;
     setLoading(true);
     try {
       await onAddItem(trimmed, selectedListId, selectedCatId);
@@ -47,13 +54,14 @@ export function BottomInputBar({
       setFocused(false);
     } finally {
       setLoading(false);
+      isSubmitting.current = false;
     }
   };
 
   const handleAddCategory = () => {
     const trimmed = newCatName.trim();
     if (!trimmed) return;
-    onAddCategory(trimmed, newCatColor);
+    onAddCategory(trimmed, newCatColor, selectedListId);
     setNewCatName('');
     setNewCatColor('gray');
     setShowAddCat(false);
@@ -69,6 +77,19 @@ export function BottomInputBar({
         zIndex: 40,
       }}
     >
+      {/* Background Overlay */}
+      {focused && (
+        <div 
+          onClick={() => setFocused(false)} 
+          style={{ 
+            position: 'fixed', 
+            inset: 0, 
+            zIndex: -1,
+            background: 'transparent'
+          }} 
+        />
+      )}
+
       {/* Expansion panel */}
       {focused && (
         <div
@@ -92,7 +113,10 @@ export function BottomInputBar({
               return (
                 <button
                   key={list.id}
-                  onClick={() => setSelectedListId(list.id)}
+                  onClick={() => {
+                    setSelectedListId(list.id);
+                    setSelectedCatId(null);
+                  }}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -154,7 +178,7 @@ export function BottomInputBar({
                       width: 120,
                     }}
                   />
-                  {CAT_COLOR_NAMES.slice(0, 7).map((c) => (
+                  {CAT_COLOR_NAMES.slice(0, 8).map((c) => (
                     <button
                       key={c}
                       onClick={() => setNewCatColor(c)}
@@ -239,7 +263,7 @@ export function BottomInputBar({
         }}
       >
         <button
-          onClick={() => setFocused(true)}
+          onClick={() => setFocused(prev => !prev)}
           style={{
             width: 32,
             height: 32,
@@ -254,7 +278,7 @@ export function BottomInputBar({
             flexShrink: 0,
           }}
         >
-          <Plus size={18} />
+          <ListPlus size={18} />
         </button>
 
         <input

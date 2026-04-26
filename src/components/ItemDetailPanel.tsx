@@ -1,4 +1,4 @@
-import { X, Trash2, Check } from 'lucide-react';
+import { X, Trash2, Check, Minus, Plus } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { catDot, catBg, catText } from '../lib/categoryColors';
 
@@ -44,6 +44,7 @@ interface ItemDetailPanelProps {
   onAddSubtask: (itemId: string, name: string) => void;
   onDeleteSubtask: (itemId: string, subtaskId: string) => void;
   onUpdateCategory: (itemId: string, categoryId: string | null) => void;
+  onUpdateQuantity: (id: string, quantity: number) => void;
   onDelete: (id: string) => void;
 }
 
@@ -60,12 +61,14 @@ export function ItemDetailPanel({
   onAddSubtask,
   onDeleteSubtask,
   onUpdateCategory,
+  onUpdateQuantity,
   onDelete,
 }: ItemDetailPanelProps) {
   const [editName, setEditName] = useState(item?.name ?? '');
   const [editNotes, setEditNotes] = useState(item?.notes ?? '');
   const [newSubtask, setNewSubtask] = useState('');
   const [prevItemId, setPrevItemId] = useState(item?.id ?? '');
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   // Swipe-to-close state
   const [dragY, setDragY] = useState(0);
@@ -204,7 +207,7 @@ export function ItemDetailPanel({
               <Trash2 size={16} />
             </button>
             <button
-              onClick={onClose}
+              onClick={(e) => { e.stopPropagation(); onClose(); }}
               style={{ background: 'var(--surface-2)', border: 'none', borderRadius: 'var(--r-sm)', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text)' }}
             >
               <X size={16} />
@@ -214,10 +217,12 @@ export function ItemDetailPanel({
 
         <div style={{ overflowY: 'auto', padding: '18px 20px 60px' }}>
           <input
+            ref={nameInputRef}
             type="text"
             value={editName}
             onChange={(e) => setEditName(e.target.value)}
             onBlur={() => { if (editName.trim() !== item.name) onUpdateName(item.id, editName.trim()); }}
+            onKeyDown={(e) => { if (e.key === 'Enter') nameInputRef.current?.blur(); }}
             style={{
               fontSize: 22,
               fontWeight: 700,
@@ -284,43 +289,32 @@ export function ItemDetailPanel({
                 🚩 Priority
               </span>
             )}
-            {item.quantity > 1 && (
-              <span style={{
-                padding: '6px 14px',
-                borderRadius: 'var(--r-sm)',
-                fontSize: 13,
-                fontWeight: 600,
-                background: 'var(--surface-2)',
-                color: 'var(--text-2)',
-              }}>
-                ×{item.quantity} qty
+            
+            {/* Quantity Control */}
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              background: 'var(--surface-2)',
+              borderRadius: 'var(--r-sm)',
+              padding: '2px 4px',
+              gap: 8,
+            }}>
+              <button
+                onClick={() => onUpdateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                style={{ background: 'none', border: 'none', color: 'var(--text-2)', padding: 4, cursor: 'pointer', display: 'flex' }}
+              >
+                <Minus size={14} />
+              </button>
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', minWidth: 20, textAlign: 'center' }}>
+                {item.quantity}
               </span>
-            )}
-          </div>
-
-          <div style={{ marginBottom: 18 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: 'var(--text-2)', marginBottom: 6 }}>
-              Notes
+              <button
+                onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-2)', padding: 4, cursor: 'pointer', display: 'flex' }}
+              >
+                <Plus size={14} />
+              </button>
             </div>
-            <textarea
-              value={editNotes}
-              onChange={(e) => setEditNotes(e.target.value)}
-              onBlur={() => { if (editNotes !== (item.notes ?? '')) onUpdateNotes(item.id, editNotes); }}
-              placeholder="Add notes..."
-              style={{
-                width: '100%',
-                minHeight: 76,
-                padding: '10px 12px',
-                fontSize: 14,
-                background: 'var(--surface-2)',
-                border: '1px solid var(--border)',
-                borderRadius: 'var(--r-sm)',
-                color: 'var(--text)',
-                outline: 'none',
-                resize: 'vertical',
-                fontFamily: 'inherit',
-              }}
-            />
           </div>
 
           <div style={{ marginBottom: 18 }}>
@@ -401,34 +395,32 @@ export function ItemDetailPanel({
             )}
           </div>
 
-          {/* Commented out Attachments for now
-          <div>
+          <div style={{ marginBottom: 18 }}>
             <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: 'var(--text-2)', marginBottom: 6 }}>
-              Attachments
+              Notes
             </div>
-            {item.attachments.map((att) => (
-              <div key={att.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0' }}>
-                <span style={{ fontSize: 14, color: 'var(--text)' }}>{att.name}</span>
-                <span style={{ fontSize: 11, color: 'var(--text-2)' }}>{att.size}</span>
-              </div>
-            ))}
-            <div
+            <textarea
+              value={editNotes}
+              onChange={(e) => setEditNotes(e.target.value)}
+              onBlur={() => { if (editNotes !== (item.notes ?? '')) onUpdateNotes(item.id, editNotes); }}
+              placeholder="Add notes..."
               style={{
-                border: '1.5px dashed var(--border)',
+                width: '100%',
+                minHeight: 76,
+                padding: '10px 12px',
+                fontSize: 14,
+                background: 'var(--surface-2)',
+                border: '1px solid var(--border)',
                 borderRadius: 'var(--r-sm)',
-                padding: '16px',
-                textAlign: 'center',
-                color: 'var(--text-2)',
-                fontSize: 13,
-                cursor: 'default',
-                marginTop: 4,
-                opacity: 0.6,
+                color: 'var(--text)',
+                outline: 'none',
+                resize: 'vertical',
+                fontFamily: 'inherit',
               }}
-            >
-              Upload (Coming Soon)
-            </div>
+            />
           </div>
-          */}
+
+          {/* Commented out Attachments for now */}
         </div>
       </div>
     </>
