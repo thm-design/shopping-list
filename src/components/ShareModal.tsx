@@ -1,5 +1,6 @@
 import { X, Copy } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import QRCode from 'qrcode';
 
 interface ShareModalProps {
   listName: string;
@@ -8,7 +9,23 @@ interface ShareModalProps {
 
 export function ShareModal({ listName, onClose }: ShareModalProps) {
   const [copied, setCopied] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+
+  useEffect(() => {
+    if (canvasRef.current && shareUrl) {
+      QRCode.toCanvas(canvasRef.current, shareUrl, {
+        width: 160,
+        margin: 0,
+        color: {
+          dark: '#111',
+          light: '#fff',
+        },
+      }, (error) => {
+        if (error) console.error('QR Code generation failed', error);
+      });
+    }
+  }, [shareUrl]);
 
   const handleCopy = async () => {
     try {
@@ -16,7 +33,7 @@ export function ShareModal({ listName, onClose }: ShareModalProps) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback: select text in input
+      // Fallback
     }
   };
 
@@ -47,7 +64,7 @@ export function ShareModal({ listName, onClose }: ShareModalProps) {
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>Share "{listName}"</h3>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>Share "{listName || "AirList"}"</h3>
           <button
             onClick={onClose}
             style={{ background: 'var(--surface-2)', border: 'none', borderRadius: 'var(--r-sm)', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text)' }}
@@ -56,7 +73,7 @@ export function ShareModal({ listName, onClose }: ShareModalProps) {
           </button>
         </div>
 
-        {/* QR code placeholder */}
+        {/* QR code */}
         <div
           style={{
             width: 160,
@@ -68,11 +85,10 @@ export function ShareModal({ listName, onClose }: ShareModalProps) {
             alignItems: 'center',
             justifyContent: 'center',
             margin: '0 auto 16px',
-            color: 'var(--text-2)',
-            fontSize: 12,
+            overflow: 'hidden',
           }}
         >
-          QR Code
+          <canvas ref={canvasRef} style={{ width: '100% !important', height: '100% !important' }} />
         </div>
 
         {/* URL row */}

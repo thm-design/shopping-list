@@ -126,88 +126,92 @@ export function BottomInputBar({
             <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: 'var(--text-2)', marginBottom: 6 }}>
               Category
             </div>
-            {categories.length === 0 && !showAddCat ? (
-              <div style={{ fontStyle: 'italic', fontSize: 12, color: 'var(--text-2)' }}>
-                No categories
-              </div>
-            ) : showAddCat ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <input
-                  type="text"
-                  value={newCatName}
-                  onChange={(e) => setNewCatName(e.target.value)}
-                  placeholder="Category name"
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleAddCategory(); if (e.key === 'Escape') setShowAddCat(false); }}
-                  autoFocus
-                  style={{
-                    fontSize: 12,
-                    padding: '4px 8px',
-                    background: 'var(--surface-2)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 'var(--r-sm)',
-                    color: 'var(--text)',
-                    outline: 'none',
-                    width: 120,
-                  }}
-                />
-                {CAT_COLOR_NAMES.slice(0, 7).map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => setNewCatColor(c)}
+            
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {showAddCat ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <input
+                    type="text"
+                    value={newCatName}
+                    onChange={(e) => setNewCatName(e.target.value)}
+                    placeholder="Category name"
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleAddCategory(); if (e.key === 'Escape') setShowAddCat(false); }}
+                    autoFocus
                     style={{
-                      width: 18,
-                      height: 18,
-                      borderRadius: '50%',
-                      background: catDot(c),
-                      border: newCatColor === c ? '2.5px solid var(--text)' : '2.5px solid transparent',
-                      cursor: 'pointer',
+                      fontSize: 12,
+                      padding: '4px 8px',
+                      background: 'var(--surface-2)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 'var(--r-sm)',
+                      color: 'var(--text)',
+                      outline: 'none',
+                      width: 120,
                     }}
                   />
-                ))}
-                <button onClick={handleAddCategory} style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer' }}>Add</button>
-                <button onClick={() => setShowAddCat(false)} style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)', background: 'var(--surface-2)', border: 'none', borderRadius: 'var(--r-xs)', padding: '2px 8px', cursor: 'pointer' }}>✕</button>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {categories.map((cat) => {
-                  const isActive = selectedCatId === cat.id;
-                  return (
+                  {CAT_COLOR_NAMES.slice(0, 7).map((c) => (
                     <button
-                      key={cat.id}
-                      onClick={() => setSelectedCatId(isActive ? null : cat.id)}
+                      key={c}
+                      onClick={() => setNewCatColor(c)}
                       style={{
-                        padding: '4px 10px',
-                        borderRadius: 'var(--r-full)',
-                        border: 'none',
+                        width: 18,
+                        height: 18,
+                        borderRadius: '50%',
+                        background: catDot(c),
+                        border: newCatColor === c ? '2.5px solid var(--text)' : '2.5px solid transparent',
                         cursor: 'pointer',
-                        fontSize: 12,
-                        fontWeight: 600,
-                        background: isActive ? catDot(cat.color) : catBg(cat.color, isDark),
-                        color: isActive ? '#fff' : catText(cat.color, isDark),
-                        transition: 'background 0.15s, color 0.15s',
                       }}
-                    >
-                      {cat.name}
-                    </button>
-                  );
-                })}
-                <button
-                  onClick={() => setShowAddCat(true)}
-                  style={{
-                    padding: '4px 10px',
-                    borderRadius: 'var(--r-full)',
-                    border: '1.5px dashed var(--border)',
-                    background: 'transparent',
-                    cursor: 'pointer',
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: 'var(--text-2)',
-                  }}
-                >
-                  + Add
-                </button>
-              </div>
-            )}
+                    />
+                  ))}
+                  <button onClick={handleAddCategory} style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer' }}>Add</button>
+                  <button onClick={() => setShowAddCat(false)} style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)', background: 'var(--surface-2)', border: 'none', borderRadius: 'var(--r-xs)', padding: '2px 8px', cursor: 'pointer' }}>✕</button>
+                </div>
+              ) : (
+                <>
+                  {categories.length === 0 && (
+                    <div style={{ fontStyle: 'italic', fontSize: 12, color: 'var(--text-2)', alignSelf: 'center', marginRight: 4 }}>
+                      No categories
+                    </div>
+                  )}
+                  {categories.map((cat) => {
+                    const isActive = selectedCatId === cat.id;
+                    return (
+                      <button
+                        key={cat.id}
+                        onClick={() => setSelectedCatId(isActive ? null : cat.id)}
+                        style={{
+                          padding: '4px 10px',
+                          borderRadius: 'var(--r-full)',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: 12,
+                          fontWeight: 600,
+                          background: isActive ? catDot(cat.color) : catBg(cat.color, isDark),
+                          color: isActive ? '#fff' : catText(cat.color, isDark),
+                          transition: 'background 0.15s, color 0.15s',
+                        }}
+                      >
+                        {cat.name}
+                      </button>
+                    );
+                  })}
+                  <button
+                    onClick={() => setShowAddCat(true)}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: 'var(--r-full)',
+                      border: '1.5px dashed var(--border)',
+                      background: 'transparent',
+                      cursor: 'pointer',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: 'var(--text-2)',
+                    }}
+                  >
+                    + Add
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
