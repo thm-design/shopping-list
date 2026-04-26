@@ -709,9 +709,7 @@ function AppImpl() {
         }}
       >
         <Header
-          listName={currentListName}
-          doneCount={doneCount}
-          totalCount={totalCount}
+          listName={currentListName === 'Shopping List' ? '' : currentListName}
           isDark={isDark}
           selectionMode={selectionMode}
           onToggleTheme={toggleTheme}

@@ -81,7 +81,7 @@ export function ListItemCard({
     borderRadius: 'var(--r-md)',
     boxShadow: isDragging ? '0 10px 30px oklch(0% 0 0 / 0.15)' : '0 1px 3px oklch(0% 0 0 / 0.05)',
     opacity: isDragging && !isOverlay ? 0.4 : isCompleted ? 0.52 : 1,
-    cursor: selectionMode ? 'pointer' : 'default',
+    cursor: selectionMode ? 'pointer' : 'grab',
     position: 'relative' as const,
     zIndex: isDragging ? 50 : 'auto',
     touchAction: 'none',
@@ -105,6 +105,7 @@ export function ListItemCard({
     <div
       ref={setNodeRef}
       style={style}
+      {...(!selectionMode ? { ...attributes, ...listeners } : {})}
       onClick={() => {
         if (selectionMode) {
           onToggleSelect(id);
@@ -113,21 +114,17 @@ export function ListItemCard({
         }
       }}
     >
-      {/* Drag grip */}
+      {/* Drag grip indicator (visual only now) */}
       {!selectionMode && (
         <div
-          {...attributes}
-          {...listeners}
           data-grip
           style={{
-            cursor: 'grab',
             color: 'var(--border)',
             display: 'flex',
             alignItems: 'center',
             flexShrink: 0,
             padding: '4px',
           }}
-          onMouseDown={(e) => e.stopPropagation()}
         >
           <svg width="14" height="20" viewBox="0 0 14 20" fill="currentColor">
             <circle cx="4" cy="4" r="1.5" />
@@ -141,45 +138,45 @@ export function ListItemCard({
       )}
 
       {/* Selection checkbox or regular checkbox */}
-      {selectionMode ? (
-        <button
-          onClick={(e) => { e.stopPropagation(); onToggleSelect(id); }}
-          style={{
-            width: 20,
-            height: 20,
-            borderRadius: 'var(--r-xs)',
-            border: isSelected ? 'none' : '1.5px solid var(--border)',
-            background: isSelected ? 'var(--accent)' : 'transparent',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            flexShrink: 0,
-            transition: 'background 0.15s, border-color 0.15s',
-          }}
-        >
-          {isSelected && <Check size={14} color="#fff" strokeWidth={3} />}
-        </button>
-      ) : (
-        <button
-          onClick={(e) => { e.stopPropagation(); onToggleComplete(id); }}
-          style={{
-            width: 20,
-            height: 20,
-            borderRadius: '50%',
-            border: isCompleted ? 'none' : '1.5px solid var(--border)',
-            background: isCompleted ? 'var(--accent)' : 'transparent',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            flexShrink: 0,
-            transition: 'background 0.15s, border-color 0.15s',
-          }}
-        >
-          {isCompleted && <Check size={14} color="#fff" strokeWidth={3} />}
-        </button>
-      )}
+      <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
+        {selectionMode ? (
+          <button
+            onClick={() => onToggleSelect(id)}
+            style={{
+              width: 20,
+              height: 20,
+              borderRadius: 'var(--r-xs)',
+              border: isSelected ? 'none' : '1.5px solid var(--border)',
+              background: isSelected ? 'var(--accent)' : 'transparent',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'background 0.15s, border-color 0.15s',
+            }}
+          >
+            {isSelected && <Check size={14} color="#fff" strokeWidth={3} />}
+          </button>
+        ) : (
+          <button
+            onClick={() => onToggleComplete(id)}
+            style={{
+              width: 20,
+              height: 20,
+              borderRadius: '50%',
+              border: isCompleted ? 'none' : '1.5px solid var(--border)',
+              background: isCompleted ? 'var(--accent)' : 'transparent',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'background 0.15s, border-color 0.15s',
+            }}
+          >
+            {isCompleted && <Check size={14} color="#fff" strokeWidth={3} />}
+          </button>
+        )}
+      </div>
 
       {/* Priority flag */}
       {priority && !selectionMode && (
@@ -263,9 +260,9 @@ export function ListItemCard({
 
       {/* ⋯ menu button */}
       {!selectionMode && (
-        <div style={{ position: 'relative', flexShrink: 0 }}>
+        <div style={{ position: 'relative', flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
           <button
-            onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
+            onClick={() => setShowMenu(!showMenu)}
             style={{
               width: 28,
               height: 28,
