@@ -70,7 +70,7 @@ export function BottomInputBar({
   return (
     <div
       style={{
-        position: 'fixed',
+        position: 'absolute',
         bottom: NAV_H + 10,
         left: 12,
         right: 12,
