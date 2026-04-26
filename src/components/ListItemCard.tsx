@@ -240,9 +240,21 @@ export function ListItemCard({
         </div>
       </div>
 
-      {/* Right-aligned area: Priority Toggle, Menu, and QTY */}
+      {/* Right-aligned area: QTY, Priority Toggle, and Menu */}
       {!selectionMode && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
+          {/* QTY display */}
+          <div style={{ 
+            fontSize: 13, 
+            fontWeight: 800, 
+            color: 'var(--text-2)',
+            minWidth: 28,
+            textAlign: 'right',
+            paddingRight: 4
+          }}>
+            {quantity > 1 ? `×${quantity}` : ''}
+          </div>
+
           {/* Priority Toggle */}
           <button
             onClick={() => onTogglePriority(id)}
@@ -396,18 +408,6 @@ export function ListItemCard({
                 </button>
               </div>
             )}
-          </div>
-
-          {/* QTY display */}
-          <div style={{ 
-            fontSize: 13, 
-            fontWeight: 800, 
-            color: 'var(--text-2)',
-            minWidth: 28,
-            textAlign: 'right',
-            paddingLeft: 4
-          }}>
-            {quantity > 1 ? `×${quantity}` : ''}
           </div>
         </div>
       )}
