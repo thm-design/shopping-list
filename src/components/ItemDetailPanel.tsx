@@ -261,7 +261,7 @@ export function ItemDetailPanel({
           <div style={{ marginBottom: 18 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
               <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: 'var(--text-2)' }}>
-                Subtasks
+                Subtasks {subtaskTotal >= 8 && <span style={{ color: 'oklch(52% 0.22 25)', marginLeft: 4 }}>(Max 8 reached)</span>}
               </span>
               {subtaskTotal > 0 && (
                 <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-2)' }}>
@@ -310,28 +310,30 @@ export function ItemDetailPanel({
                 </button>
               </div>
             ))}
-            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-              <input
-                type="text"
-                value={newSubtask}
-                onChange={(e) => setNewSubtask(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && newSubtask.trim()) {
-                    onAddSubtask(item.id, newSubtask.trim());
-                    setNewSubtask('');
-                  }
-                }}
-                placeholder="Add a new subtask…"
-                style={{
-                  flex: 1,
-                  fontSize: 14,
-                  background: 'transparent',
-                  border: 'none',
-                  outline: 'none',
-                  color: 'var(--text)',
-                }}
-              />
-            </div>
+            {subtaskTotal < 8 && (
+              <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                <input
+                  type="text"
+                  value={newSubtask}
+                  onChange={(e) => setNewSubtask(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && newSubtask.trim()) {
+                      onAddSubtask(item.id, newSubtask.trim());
+                      setNewSubtask('');
+                    }
+                  }}
+                  placeholder="Add a new subtask…"
+                  style={{
+                    flex: 1,
+                    fontSize: 14,
+                    background: 'transparent',
+                    border: 'none',
+                    outline: 'none',
+                    color: 'var(--text)',
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           <div>

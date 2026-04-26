@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Check, Flag } from 'lucide-react';
+import { Check, Flag, Minus, Plus, ListChecks } from 'lucide-react';
 import { catBg, catText } from '../lib/categoryColors';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -27,6 +27,7 @@ interface ListItemCardProps {
   onDelete: (id: string) => void;
   onViewDetail: (id: string) => void;
   onToggleSelect: (id: string) => void;
+  onUpdateQuantity: (id: string, quantity: number) => void;
   isOverlay?: boolean;
 }
 
@@ -47,6 +48,7 @@ export function ListItemCard({
   onDelete,
   onViewDetail,
   onToggleSelect,
+  onUpdateQuantity,
   isOverlay = false,
 }: ListItemCardProps) {
   const [showMenu, setShowMenu] = useState(false);
@@ -81,10 +83,9 @@ export function ListItemCard({
     borderRadius: 'var(--r-md)',
     boxShadow: isDragging ? '0 10px 30px oklch(0% 0 0 / 0.15)' : '0 1px 3px oklch(0% 0 0 / 0.05)',
     opacity: isDragging && !isOverlay ? 0.4 : isCompleted ? 0.52 : 1,
-    cursor: selectionMode ? 'pointer' : 'grab',
+    cursor: selectionMode ? 'pointer' : 'default',
     position: 'relative' as const,
     zIndex: isDragging ? 50 : 'auto',
-    touchAction: 'none',
   };
 
   useEffect(() => {
@@ -105,7 +106,6 @@ export function ListItemCard({
     <div
       ref={setNodeRef}
       style={style}
-      {...(!selectionMode ? { ...attributes, ...listeners } : {})}
       onClick={() => {
         if (selectionMode) {
           onToggleSelect(id);
@@ -118,12 +118,16 @@ export function ListItemCard({
       {!selectionMode && (
         <div
           data-grip
+          {...attributes}
+          {...listeners}
           style={{
             color: 'var(--border)',
             display: 'flex',
             alignItems: 'center',
             flexShrink: 0,
-            padding: '4px',
+            padding: '8px 12px 8px 10px',
+            cursor: 'grab',
+            touchAction: 'none',
           }}
         >
           <svg width="14" height="20" viewBox="0 0 14 20" fill="currentColor">
@@ -178,15 +182,6 @@ export function ListItemCard({
         )}
       </div>
 
-      {/* Priority flag */}
-      {priority && !selectionMode && (
-        <Flag
-          size={12}
-          style={{ color: 'oklch(52% 0.22 25)', flexShrink: 0 }}
-          fill="oklch(52% 0.22 25)"
-        />
-      )}
-
       {/* Item name and badges column */}
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
         <span
@@ -233,30 +228,53 @@ export function ListItemCard({
                 background: 'var(--surface-2)',
                 color: 'var(--text-2)',
                 flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 3,
               }}
             >
+              <ListChecks size={12} />
               {subtaskDone}/{subtaskTotal}
-            </span>
-          )}
-
-          {/* Qty badge */}
-          {quantity > 1 && (
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                padding: '2px 5px',
-                borderRadius: 'var(--r-xs)',
-                background: 'var(--surface-2)',
-                color: 'var(--text-2)',
-                flexShrink: 0,
-              }}
-            >
-              ×{quantity}
             </span>
           )}
         </div>
       </div>
+
+      {/* Right-aligned area: Priority Toggle and QTY */}
+      {!selectionMode && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
+          {/* Priority Toggle */}
+          <button
+            onClick={() => onTogglePriority(id)}
+            style={{
+              padding: 4,
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: priority ? 'oklch(52% 0.22 25)' : 'var(--text-2)',
+              opacity: priority ? 1 : 0.4,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'opacity 0.2s, color 0.2s',
+            }}
+            aria-label={priority ? "Remove priority" : "Mark as priority"}
+          >
+            <Flag size={18} fill={priority ? 'oklch(52% 0.22 25)' : 'none'} />
+          </button>
+
+          {/* QTY display */}
+          <div style={{ 
+            fontSize: 13, 
+            fontWeight: 700, 
+            color: 'var(--text-2)',
+            minWidth: 24,
+            textAlign: 'center'
+          }}>
+            {quantity > 1 ? `×${quantity}` : ''}
+          </div>
+        </div>
+      )}
 
       {/* ⋯ menu button */}
       {!selectionMode && (
@@ -297,6 +315,47 @@ export function ListItemCard({
                 overflow: 'hidden',
               }}
             >
+              <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)' }}>Quantity</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); if (quantity > 1) onUpdateQuantity(id, quantity - 1); }}
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: '50%',
+                      background: 'var(--surface-2)',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--text)',
+                    }}
+                  >
+                    <Minus size={14} />
+                  </button>
+                  <span style={{ fontSize: 14, fontWeight: 700, minWidth: 16, textAlign: 'center' }}>{quantity}</span>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onUpdateQuantity(id, quantity + 1); }}
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: '50%',
+                      background: 'var(--surface-2)',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--text)',
+                    }}
+                  >
+                    <Plus size={14} />
+                  </button>
+                </div>
+              </div>
+
               <button
                 onClick={(e) => { e.stopPropagation(); onTogglePriority(id); setShowMenu(false); }}
                 style={{

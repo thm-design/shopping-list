@@ -1,5 +1,5 @@
-import { X, Plus, Check } from 'lucide-react';
-import { useState } from 'react';
+import { X, Plus, Check, Edit2, Trash2, ShoppingBag } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
 
 interface ShoppingList {
   id: string;
@@ -13,11 +13,17 @@ interface MyListsPanelProps {
   onSelectList: (id: string) => void;
   onClose: () => void;
   onAddList: (name: string) => void;
+  onDeleteList: (id: string) => void;
+  onUpdateListName: (id: string, name: string) => void;
+  isDark: boolean;
 }
 
-export function MyListsPanel({ lists, currentListId, onSelectList, onClose, onAddList }: MyListsPanelProps) {
+export function MyListsPanel({ lists, currentListId, onSelectList, onClose, onAddList, onDeleteList, onUpdateListName, isDark }: MyListsPanelProps) {
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState('');
+  const [editingListId, setEditingListId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const editInputRef = useRef<HTMLInputElement>(null);
 
   const handleAdd = () => {
     const trimmed = newName.trim();
@@ -26,6 +32,24 @@ export function MyListsPanel({ lists, currentListId, onSelectList, onClose, onAd
     setNewName('');
     setShowAdd(false);
   };
+
+  const startEditing = (list: ShoppingList) => {
+    setEditingListId(list.id);
+    setEditName(list.name);
+  };
+
+  const saveEdit = () => {
+    if (editingListId && editName.trim()) {
+      onUpdateListName(editingListId, editName.trim());
+    }
+    setEditingListId(null);
+  };
+
+  useEffect(() => {
+    if (editingListId && editInputRef.current) {
+      editInputRef.current.focus();
+    }
+  }, [editingListId]);
 
   return (
     <>
@@ -45,65 +69,163 @@ export function MyListsPanel({ lists, currentListId, onSelectList, onClose, onAd
           top: 0,
           left: 0,
           bottom: 0,
-          width: 'min(288px, 82vw)',
+          width: 'min(300px, 85vw)',
           zIndex: 51,
           background: 'var(--surface)',
           animation: 'slideInLeft 0.22s cubic-bezier(0.4,0,0.2,1)',
           display: 'flex',
           flexDirection: 'column',
+          boxShadow: '4px 0 24px oklch(0% 0 0 / 0.15)',
         }}
       >
-        <div style={{ padding: '48px 20px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h2 style={{ fontSize: 22, fontWeight: 700, letterSpacing: -0.4, color: 'var(--text)' }}>My Lists</h2>
+        <div style={{ padding: '24px 20px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                background: isDark ? '#fff' : '#111',
+                color: isDark ? '#111' : '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 6px oklch(0% 0 0 / 0.1)',
+              }}
+            >
+              <ShoppingBag size={16} strokeWidth={2.5} />
+            </div>
+            <h1 style={{ fontSize: 18, fontWeight: 800, letterSpacing: -0.5, color: 'var(--text)', margin: 0 }}>AirList</h1>
+          </div>
           <button
             onClick={onClose}
-            style={{ background: 'var(--surface-2)', border: 'none', borderRadius: 'var(--r-sm)', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text)' }}
+            style={{ background: 'var(--surface-2)', border: 'none', borderRadius: 'var(--r-sm)', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text)' }}
           >
-            <X size={18} />
+            <X size={16} />
           </button>
+        </div>
+
+        <div style={{ padding: '20px 20px 10px' }}>
+          <h2 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>My Lists</h2>
         </div>
 
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {lists.map((list) => {
             const isActive = list.id === currentListId;
+            const isEditing = editingListId === list.id;
             return (
-              <button
+              <div
                 key={list.id}
-                onClick={() => { onSelectList(list.id); onClose(); }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 12,
-                  padding: '10px 20px',
                   width: '100%',
                   background: isActive ? 'var(--accent-bg)' : 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  textAlign: 'left',
+                  paddingRight: 8,
                 }}
               >
-                <div style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 'var(--r-sm)',
-                  background: isActive ? 'var(--accent)' : 'var(--surface-2)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}>
-                  <span style={{ fontSize: 14, color: isActive ? '#fff' : 'var(--text-2)' }}>📋</span>
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: isActive ? 'var(--accent-fg)' : 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {list.name}
+                <button
+                  onClick={() => { if (!isEditing) { onSelectList(list.id); onClose(); } }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '10px 12px 10px 20px',
+                    flex: 1,
+                    background: 'none',
+                    border: 'none',
+                    cursor: isEditing ? 'default' : 'pointer',
+                    textAlign: 'left',
+                    minWidth: 0,
+                  }}
+                >
+                  <div style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 'var(--r-sm)',
+                    background: isActive ? 'var(--accent)' : 'var(--surface-2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}>
+                    <span style={{ fontSize: 14, color: isActive ? '#fff' : 'var(--text-2)' }}>📋</span>
                   </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-2)' }}>
-                    {list.itemCount ?? 0} items
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {isEditing ? (
+                      <input
+                        ref={editInputRef}
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        onBlur={saveEdit}
+                        onKeyDown={(e) => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') setEditingListId(null); }}
+                        style={{
+                          width: '100%',
+                          fontSize: 14,
+                          fontWeight: 600,
+                          background: 'var(--surface-2)',
+                          border: '1px solid var(--accent)',
+                          borderRadius: 'var(--r-xs)',
+                          padding: '2px 4px',
+                          color: 'var(--text)',
+                          outline: 'none',
+                        }}
+                      />
+                    ) : (
+                      <>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: isActive ? 'var(--accent-fg)' : 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {list.name}
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--text-2)' }}>
+                          {list.itemCount ?? 0} items
+                        </div>
+                      </>
+                    )}
                   </div>
+                  {isActive && !isEditing && <Check size={16} style={{ color: 'var(--accent)', flexShrink: 0 }} />}
+                </button>
+                
+                <div style={{ display: 'flex', gap: 2 }}>
+                  {!isEditing && (
+                    <button
+                      onClick={() => startEditing(list)}
+                      style={{
+                        padding: '10px 8px',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: 'var(--text-2)',
+                        borderRadius: 'var(--r-sm)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                      aria-label={`Rename ${list.name}`}
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                  )}
+                  {lists.length > 1 && (
+                    <button
+                      onClick={() => { if (confirm(`Delete list "${list.name}"?`)) onDeleteList(list.id); }}
+                      style={{
+                        padding: '10px 8px',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: 'oklch(52% 0.22 25)',
+                        borderRadius: 'var(--r-sm)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                      aria-label={`Delete ${list.name}`}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
                 </div>
-                {isActive && <Check size={16} style={{ color: 'var(--accent)', flexShrink: 0 }} />}
-              </button>
+              </div>
             );
           })}
         </div>

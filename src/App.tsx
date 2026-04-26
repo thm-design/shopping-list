@@ -7,6 +7,7 @@ import {
   closestCenter,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   DragOverlay,
@@ -74,10 +75,23 @@ function AppImpl() {
         distance: 8,
       },
     }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  const handleUpdateQuantity = async (id: string, quantity: number) => {
+    const { data, errors } = await client.models.ListItem.update({ id, quantity });
+    if (!errors && data) {
+      setItems(prev => prev.map(i => i.id === id ? data : i));
+    }
+  };
 
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window === 'undefined') return 'light';
@@ -559,6 +573,39 @@ function AppImpl() {
     }
   };
 
+  const handleDeleteList = async (id: string) => {
+    // Delete items in this list first
+    const listItemsToDelete = items.filter(i => i.listId === id);
+    for (const item of listItemsToDelete) {
+      await client.models.ListItem.delete({ id: item.id });
+    }
+    // Delete categories in this list
+    const listCatsToDelete = categories.filter(c => c.listId === id);
+    for (const cat of listCatsToDelete) {
+      await client.models.Category.delete({ id: cat.id });
+    }
+    // Delete the list itself
+    const { errors } = await client.models.ShoppingList.delete({ id });
+    if (!errors) {
+      setLists(prev => {
+        const next = prev.filter(l => l.id !== id);
+        if (currentListId === id) {
+          setCurrentListId(next.length > 0 ? next[0].id : null);
+        }
+        return next;
+      });
+      setItems(prev => prev.filter(i => i.listId !== id));
+      setCategories(prev => prev.filter(c => c.listId !== id));
+    }
+  };
+
+  const handleUpdateListName = async (id: string, name: string) => {
+    const { data, errors } = await client.models.ShoppingList.update({ id, name });
+    if (!errors && data) {
+      setLists(prev => prev.map(l => l.id === id ? data : l));
+    }
+  };
+
   const handleDeleteItem = (id: string) => {
     const item = items.find(i => i.id === id);
     const itemName = item?.name ?? 'this item';
@@ -864,9 +911,9 @@ function AppImpl() {
                         onTogglePriority={togglePriority}
                         onDelete={handleDeleteItem}
                         onViewDetail={(id) => setDetailItemId(id)}
+                        onUpdateQuantity={handleUpdateQuantity}
                         onToggleSelect={(id) => {
-                          setSelectedIds(prev => {
-                            const next = new Set(prev);
+                          setSelectedIds(prev => {                            const next = new Set(prev);
                             if (next.has(id)) next.delete(id); else next.add(id);
                             return next;
                           });
@@ -900,10 +947,10 @@ function AppImpl() {
                       onTogglePriority={() => {}}
                       onDelete={() => {}}
                       onViewDetail={() => {}}
+                      onUpdateQuantity={() => {}}
                       onToggleSelect={() => {}}
                       isOverlay
-                    />
-                  );
+                      />                  );
                 })() : null}
               </DragOverlay>
             </DndContext>
@@ -1080,7 +1127,7 @@ function AppImpl() {
         <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
 
         {showLists && (
-          <MyListsPanel
+          < MyListsPanel
             lists={lists.map(l => ({
               id: l.id,
               name: l.name ?? '',
@@ -1090,6 +1137,9 @@ function AppImpl() {
             onSelectList={(id) => { setCurrentListId(id); setShowLists(false); setSelectedCategory(null); }}
             onClose={() => setShowLists(false)}
             onAddList={handleAddList}
+            onDeleteList={handleDeleteList}
+            onUpdateListName={handleUpdateListName}
+            isDark={isDark}
           />
         )}
 
