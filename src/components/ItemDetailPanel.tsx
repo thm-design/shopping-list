@@ -1,5 +1,5 @@
 import { X, Trash2, Check } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { catDot, catBg, catText } from '../lib/categoryColors';
 
 interface Subtask {
@@ -67,6 +67,11 @@ export function ItemDetailPanel({
   const [newSubtask, setNewSubtask] = useState('');
   const [prevItemId, setPrevItemId] = useState(item?.id ?? '');
 
+  // Swipe-to-close state
+  const [dragY, setDragY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const touchStartY = useRef(0);
+
   if (item && item.id !== prevItemId) {
     setEditName(item.name);
     setEditNotes(item.notes ?? '');
@@ -74,6 +79,29 @@ export function ItemDetailPanel({
   }
 
   if (!item) return null;
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    const deltaY = e.touches[0].clientY - touchStartY.current;
+    if (deltaY > 0) {
+      setDragY(deltaY);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    if (dragY > 100) {
+      onClose();
+    } else {
+      setDragY(0);
+    }
+  };
 
   const cat = categories.find((c) => c.id === item.categoryId);
   const subtaskDone = item.subtasks.filter((s) => s.done).length;
@@ -89,6 +117,7 @@ export function ItemDetailPanel({
           zIndex: 60,
           background: 'oklch(0% 0 0 / 0.5)',
           animation: 'fadeIn 0.15s ease-out',
+          opacity: Math.max(0, 1 - dragY / 300),
         }}
         onClick={onClose}
       />
@@ -104,11 +133,19 @@ export function ItemDetailPanel({
           borderRadius: 'var(--r-xl) var(--r-xl) 0 0',
           display: 'flex',
           flexDirection: 'column',
-          animation: 'slideUp 0.22s ease-out',
+          animation: dragY > 0 ? 'none' : 'slideUp 0.22s ease-out',
+          transform: `translateY(${dragY}px)`,
+          transition: isDragging ? 'none' : 'transform 0.2s ease-out',
+          boxShadow: '0 -8px 32px oklch(0% 0 0 / 0.15)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 10, paddingBottom: 4 }}>
+        <div 
+          style={{ display: 'flex', justifyContent: 'center', paddingTop: 10, paddingBottom: 14, cursor: 'ns-resize', touchAction: 'none' }}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border)' }} />
         </div>
 
@@ -147,7 +184,7 @@ export function ItemDetailPanel({
           </div>
         </div>
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '18px 20px 48px' }}>
+        <div style={{ overflowY: 'auto', padding: '18px 20px 60px' }}>
           <input
             type="text"
             value={editName}
@@ -175,7 +212,7 @@ export function ItemDetailPanel({
                 alignItems: 'center',
                 gap: 5,
                 padding: '6px 14px',
-                borderRadius: 'var(--r-full)',
+                borderRadius: 'var(--r-sm)',
                 fontSize: 13,
                 fontWeight: 600,
                 background: cat ? catBg(cat.color, isDark) : 'var(--surface-2)',
@@ -210,7 +247,7 @@ export function ItemDetailPanel({
                 alignItems: 'center',
                 gap: 4,
                 padding: '6px 14px',
-                borderRadius: 'var(--r-full)',
+                borderRadius: 'var(--r-sm)',
                 fontSize: 13,
                 fontWeight: 600,
                 background: isDark ? 'oklch(17% 0.06 25)' : 'oklch(97% 0.03 25)',
@@ -222,7 +259,7 @@ export function ItemDetailPanel({
             {item.quantity > 1 && (
               <span style={{
                 padding: '6px 14px',
-                borderRadius: 'var(--r-full)',
+                borderRadius: 'var(--r-sm)',
                 fontSize: 13,
                 fontWeight: 600,
                 background: 'var(--surface-2)',
@@ -336,6 +373,7 @@ export function ItemDetailPanel({
             )}
           </div>
 
+          {/* Commented out Attachments for now
           <div>
             <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: 'var(--text-2)', marginBottom: 6 }}>
               Attachments
@@ -362,6 +400,7 @@ export function ItemDetailPanel({
               Upload (Coming Soon)
             </div>
           </div>
+          */}
         </div>
       </div>
     </>

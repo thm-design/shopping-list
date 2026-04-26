@@ -1,7 +1,6 @@
 import { Share2, Moon, Sun, Grid2X2, ShoppingBag } from 'lucide-react';
 
 interface HeaderProps {
-  listName: string;
   isDark: boolean;
   selectionMode: boolean;
   onToggleTheme: () => void;
@@ -11,7 +10,6 @@ interface HeaderProps {
 }
 
 export function Header({
-  listName,
   isDark,
   selectionMode,
   onToggleTheme,
@@ -73,7 +71,7 @@ export function Header({
             textOverflow: 'ellipsis',
             margin: 0
           }}>
-            {listName || "AirList"}
+            AirList
           </h1>
         </div>
       </div>

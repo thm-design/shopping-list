@@ -198,7 +198,7 @@ test.describe('AirList Shopping List App', () => {
     await itemText.click();
     await page.waitForTimeout(300);
 
-    await expect(page.locator('text=Notes').or(page.locator('text=Subtasks'))).toBeVisible();
+    await expect(page.locator('text=Notes').or(page.locator('text=Subtasks')).first()).toBeVisible();
   });
 
   test('should delete an item via detail panel', async ({ page }) => {

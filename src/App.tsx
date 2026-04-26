@@ -756,11 +756,10 @@ function AppImpl() {
         }}
       >
         <Header
-          listName={currentListName === 'Shopping List' ? '' : currentListName}
           isDark={isDark}
           selectionMode={selectionMode}
           onToggleTheme={toggleTheme}
-          onOpenLists={() => setShowLists(true)}
+          onOpenLists={() => setShowLists(prev => !prev)}
           onOpenShare={() => setShowShare(true)}
           onToggleSelectionMode={() => {
             setSelectionMode(prev => !prev);
@@ -768,19 +767,21 @@ function AppImpl() {
           }}
         />
 
-        <ProgressBar doneCount={doneCount} totalCount={totalCount} />
+        <ProgressBar doneCount={doneCount} totalCount={totalCount} listName={currentListName} />
 
         {activeTab === 'list' && (
-          <CategoryFilterBar
-            categories={listCategories.map(c => ({ id: c.id, name: c.name ?? '', color: c.color ?? 'gray' }))}
-            selectedCat={selectedCategory}
-            sortMode={sortMode}
-            isDark={isDark}
-            onSelectCat={setSelectedCategory}
-            onToggleSort={() => handleSortModeChange(sortMode === 'category' ? 'custom' : 'category')}
-            itemCounts={itemCounts}
-            allItemCount={listItems.length}
-          />
+          <div style={{ marginBottom: 12 }}>
+            <CategoryFilterBar
+              categories={listCategories.map(c => ({ id: c.id, name: c.name ?? '', color: c.color ?? 'gray' }))}
+              selectedCat={selectedCategory}
+              sortMode={sortMode}
+              isDark={isDark}
+              onSelectCat={setSelectedCategory}
+              onToggleSort={() => handleSortModeChange(sortMode === 'category' ? 'custom' : 'category')}
+              itemCounts={itemCounts}
+              allItemCount={listItems.length}
+            />
+          </div>
         )}
 
         <main style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }} className="custom-scrollbar">
@@ -910,7 +911,7 @@ function AppImpl() {
                         onToggleComplete={(id) => toggleItem(id, item.isCompleted ?? false)}
                         onTogglePriority={togglePriority}
                         onDelete={handleDeleteItem}
-                        onViewDetail={(id) => setDetailItemId(id)}
+                        onViewDetail={(id) => setDetailItemId(prev => prev === id ? null : id)}
                         onUpdateQuantity={handleUpdateQuantity}
                         onToggleSelect={(id) => {
                           setSelectedIds(prev => {                            const next = new Set(prev);

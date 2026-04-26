@@ -66,7 +66,7 @@ export function CategoryFilterBar({
         onClick={() => onSelectCat(null)}
         style={{
           padding: '4px 10px',
-          borderRadius: 'var(--r-full)',
+          borderRadius: 'var(--r-sm)',
           border: 'none',
           cursor: 'pointer',
           fontSize: 12,
@@ -92,7 +92,7 @@ export function CategoryFilterBar({
             onClick={() => onSelectCat(isActive ? null : cat.id)}
             style={{
               padding: '4px 10px',
-              borderRadius: 'var(--r-full)',
+              borderRadius: 'var(--r-sm)',
               border: 'none',
               cursor: 'pointer',
               fontSize: 12,
